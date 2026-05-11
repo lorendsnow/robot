@@ -20,11 +20,11 @@ target_include_directories(robot
 )
 
 if(DEFINED ENV{SSID})
-    target_compile_options(robot PRIVATE "-DSSID=$ENV{SSID}")
+    target_compile_options(robot PRIVATE "-DSSID=\"$ENV{SSID}\"")
 endif()
 
 if(DEFINED ENV{WIFI_PASS})
-    target_compile_options(robot PRIVATE "-DWIFI_PASS=$ENV{WIFI_PASS}")
+    target_compile_options(robot PRIVATE "-DWIFI_PASS=\"$ENV{WIFI_PASS}\"")
 endif()
 
 pico_add_extra_outputs(robot)
