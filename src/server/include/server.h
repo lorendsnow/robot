@@ -1,0 +1,36 @@
+#ifndef _SERVER_H
+#define _SERVER_H
+
+#include "lwipopts.h"
+#include "pico/cyw43_arch.h"
+#include "pico/util/queue.h"
+#include "pico/stdlib.h"
+#include "lwip/tcp.h"
+
+typedef struct Server {
+    struct tcp_pcb* pcb;
+    queue_t*        queue;
+    err_t*          err;
+} Server;
+
+typedef struct Conn {
+    struct tcp_pcb* pcb;
+    queue_t*        queue;
+    uint8_t*        buf[256];
+    uint8_t         cursor;
+} Conn;
+
+typedef enum ServerErr {
+    OK      = 0,
+    INIT    = 1,
+    CONNECT = 2,
+    BIND    = 3,
+} ServerErr;
+
+typedef uint8_t Ip4Addr[4];
+
+ServerErr server_init(Server* s);
+void      get_ip4_addr(Ip4Addr addr);
+ServerErr wifi_connect(char* ssid, char* pw);
+
+#endif  // _SERVER_H
