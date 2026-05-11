@@ -16,7 +16,7 @@ typedef struct Server {
 typedef struct Conn {
     struct tcp_pcb* pcb;
     queue_t*        queue;
-    uint8_t*        buf[256];
+    uint8_t         buf[256];
     uint8_t         cursor;
 } Conn;
 
