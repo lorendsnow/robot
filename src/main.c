@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "server.h"
+#include "tcp_fns.h"
 
 #ifndef SSID
 #define SSID ""
@@ -40,19 +41,14 @@ int main() {
 
     queue_t queue;
     queue_init(&queue, sizeof(uint8_t), 256);
-    Server s = {.pcb = NULL, .queue = &queue, .err = NULL};
+    Server s = {.pcb = NULL, .err = NULL};
 
-    if (server_init(&s)) {
+    if (server_init(&s, accept)) {
         printf("error occurred trying to initiate server\n");
     } else {
         printf("successfully initiated server listen\n");
     }
 
     while (true) {
-        while (!queue_is_empty(&queue)) {
-            char c;
-            queue_remove_blocking(&queue, &c);
-            printf("took character %c out of queue\n", c);
-        }
     }
 }

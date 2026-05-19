@@ -15,9 +15,7 @@ typedef struct Server {
 
 typedef struct Conn {
     struct tcp_pcb* pcb;
-    queue_t*        queue;
     uint8_t         buf[256];
-    uint8_t         cursor;
 } Conn;
 
 typedef enum ServerErr {
@@ -27,9 +25,16 @@ typedef enum ServerErr {
     BIND    = 3,
 } ServerErr;
 
+typedef enum Direction {
+    FWD   = 0,
+    REV   = 1,
+    LEFT  = 2,
+    RIGHT = 4,
+} Direction;
+
 typedef uint8_t Ip4Addr[4];
 
-ServerErr server_init(Server* s);
+ServerErr server_init(Server* s, tcp_accept_fn accept_fn);
 void      get_ip4_addr(Ip4Addr addr);
 ServerErr wifi_connect(char* ssid, char* pw);
 

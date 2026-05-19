@@ -1,12 +1,12 @@
 add_subdirectory(server)
 add_subdirectory(drivetrain)
 
-add_executable(robot main.c)
+add_executable(robot main.c tcp_fns.c)
 
 pico_set_program_name(robot "robot")
 pico_set_program_version(robot "0.1")
 
-pico_enable_stdio_usb(robot 1)
+pico_enable_stdio_uart(robot 1)
 
 target_link_libraries(robot
     PRIVATE
