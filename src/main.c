@@ -16,6 +16,8 @@
 int main() {
     stdio_init_all();
 
+    sleep_ms(1000);
+
     printf("SSID: %s\n", SSID);
     printf("Password: %s\n", WIFI_PASS);
 
