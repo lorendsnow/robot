@@ -26,6 +26,7 @@ ServerErr server_init(Server* s, tcp_accept_fn accept_fn) {
 
     s->pcb = tcp_listen_with_backlog_and_err(s->pcb, 3, s->err);
     tcp_accept(s->pcb, accept_fn);
+    tcp_arg(s->pcb, s->queue);
 
     cyw43_arch_lwip_end();
 

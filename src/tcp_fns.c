@@ -5,45 +5,50 @@
 #include "server.h"
 
 err_t receive(void* arg, struct tcp_pcb* tcp_pcb, struct pbuf* p, err_t err) {
-    cyw43_arch_lwip_begin();
     printf("server received data from %d.%d.%d.%d\n",
            (uint8_t)(tcp_pcb->remote_ip.addr),
            (uint8_t)(tcp_pcb->remote_ip.addr >> 8),
            (uint8_t)(tcp_pcb->remote_ip.addr >> 16),
            (uint8_t)(tcp_pcb->remote_ip.addr >> 24));
 
-    printf("number of bytes received: %d\n", p->len);
-
     if (!p) {
         printf("connection closed by client\n");
-        tcp_close(tcp_pcb);
-        free(arg);
-        return ERR_OK;
+        return ERR_CLSD;
     }
 
-    memcpy(((Conn*)arg)->buf, p->payload, p->len);
-    printf("received payload: ");
-    for (int i = 0; i < p->len; i++) {
+    printf("number of bytes received: %d\n", p->tot_len);
+
+    for (struct pbuf* q = p; q != NULL; q = q->next) {
+        uint16_t copied = pbuf_copy_partial(q, ((Conn*)arg)->buf, 1024, 0);
+        if (!copied) {
+            printf("failed to copy bytes\n");
+            return ERR_BUF;
+        }
+    }
+
+    tcp_recved(tcp_pcb, p->tot_len);
+
+    printf("adding bytes to queue: ");
+    for (int i = 0; i < p->tot_len; i++) {
         printf("%X ", ((Conn*)arg)->buf[i]);
+        queue_add_blocking(((Conn*)arg)->queue, ((Conn*)arg)->buf + i);
     }
     puts("");
 
-    tcp_recved(tcp_pcb, p->len);
-    cyw43_arch_lwip_end();
+    pbuf_free(p);
 
     return ERR_OK;
 }
 
 err_t accept(void* arg, struct tcp_pcb* newpcb, err_t err) {
-    cyw43_arch_lwip_begin();
+    Conn* conn  = malloc(sizeof(Conn));
+    conn->pcb   = newpcb;
+    conn->queue = (queue_t*)arg;
 
-    Conn* conn = malloc(sizeof(Conn));
-    conn->pcb  = newpcb;
     tcp_arg(conn->pcb, conn);
     tcp_recv(conn->pcb, receive);
 
     printf("server accepted connection\n");
-    cyw43_arch_lwip_end();
 
     return ERR_OK;
 }
