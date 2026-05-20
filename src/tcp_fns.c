@@ -37,13 +37,15 @@ err_t receive(void* arg, struct tcp_pcb* tcp_pcb, struct pbuf* p, err_t err) {
 
     pbuf_free(p);
 
+    printf("server done receiving\n");
+
     return ERR_OK;
 }
 
 err_t accept(void* arg, struct tcp_pcb* newpcb, err_t err) {
     Conn* conn  = malloc(sizeof(Conn));
     conn->pcb   = newpcb;
-    conn->queue = (queue_t*)arg;
+    conn->queue = ((Server*)arg)->queue;
 
     tcp_arg(conn->pcb, conn);
     tcp_recv(conn->pcb, receive);

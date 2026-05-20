@@ -26,13 +26,6 @@ typedef enum ServerErr {
     BIND    = 3,
 } ServerErr;
 
-typedef enum Direction {
-    FWD   = 0,
-    REV   = 1,
-    LEFT  = 2,
-    RIGHT = 4,
-} Direction;
-
 typedef uint8_t Ip4Addr[4];
 
 ServerErr server_init(Server* s, tcp_accept_fn accept_fn);

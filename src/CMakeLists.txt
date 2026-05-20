@@ -11,6 +11,7 @@ pico_enable_stdio_uart(robot 1)
 target_link_libraries(robot
     PRIVATE
         pico_stdlib
+        drivetrain
         server
 )
 

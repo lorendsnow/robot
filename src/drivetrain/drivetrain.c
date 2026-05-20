@@ -1,3 +1,5 @@
+#include "pico/printf.h"
+
 #include "drivetrain.h"
 
 /* Left-Hand side input pins */
@@ -31,34 +33,106 @@
 
 #define ALL_GPIO (ENABLES | INPUTS)  /// All GPIO pins
 
+// state is a bitmask that holds the current drive state.
+// bit 0 - forward
+// bit 1 - reverse
+// bit 2 - left
+// bit 3 - right
+// bit 4 - coast (wheels unlocked)
+static uint8_t state = 0;
+
+void print_bits(uint8_t num) {
+    printf("0b");
+    for (int i = 7; i >= 0; i--) {
+        printf("%c", (num & (1 << i)) ? '1' : '0');
+    }
+}
+
+void print_state(void) {
+    printf("current drive state: ");
+    print_bits(state);
+    puts("");
+}
+
 void drivetrain_init(void) {
     gpio_init_mask(ALL_GPIO);
     gpio_set_dir_out_masked(ALL_GPIO);
     drive_brake();
+    print_state();
 }
 
 void drive_fwd(void) {
+    if (state & (1 << 1)) {  // brake if we're reversing
+        printf("we're going in reverse, gonna brake!\n");
+        drive_brake();
+        return;
+    }
+
     gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT1 | REAR_INPUT3 |
                   ENABLES);
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT2 | REAR_INPUT4);
+
+    // clear reverse and direction bits and set fwd bit
+    state &= ~(1 << 1);
+    state &= ~(1 << 2);
+    state &= ~(1 << 3);
+    state |= 1;
+
+    print_state();
 }
 
 void drive_reverse(void) {
+    if (state & (1)) {  // brake if we're going forward
+        printf("we're going forward, gonna brake!\n");
+        drive_brake();
+        return;
+    }
+
     gpio_clr_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT1 | REAR_INPUT3);
     gpio_set_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT2 | REAR_INPUT4 |
                   ENABLES);
+
+    // clear fwd and directions bits and set reverse bit
+    state &= ~(1);
+    state &= ~(1 << 2);
+    state &= ~(1 << 3);
+    state |= (1 << 1);
+
+    print_state();
 }
 
-void drive_brake(void) { gpio_set_mask(ALL_GPIO); }
+void drive_brake(void) {
+    gpio_set_mask(ALL_GPIO);
+    state = 0;
 
-void drive_coast(void) { gpio_clr_mask(ENABLES); }
+    print_state();
+}
+
+void drive_coast(void) {
+    gpio_clr_mask(ENABLES);
+    state &= 1 << 5;
+
+    print_state();
+}
 
 void drive_left(void) {
     gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT4);
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT3);
+
+    // set left bit and clear right bit
+    state |= (1 << 2);
+    state &= ~(1 << 3);
+
+    print_state();
 }
 
 void drive_right(void) {
     gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT4);
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT3);
+
+    // set right bit and clear left bit
+    state |= (1 << 3);
+    state &= ~(1 << 2);
+
+    print_state();
 }
