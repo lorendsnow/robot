@@ -81,7 +81,6 @@ void process_loop(queue_t* q, char* buf) {
     while (true) {
         while (!queue_is_empty(q)) {
             printf("parsing commands from queue\n");
-            parse_cmd(q, buf);
             switch (parse_cmd(q, buf)) {
                 case -1:
                     printf(
@@ -91,6 +90,7 @@ void process_loop(queue_t* q, char* buf) {
                     printf("completed parsing - queue is empty\n");
                     continue;
                 default:
+                    printf("command parsed to %s\n", buf);
                     break;
             }
 
@@ -102,6 +102,8 @@ void process_loop(queue_t* q, char* buf) {
                 drive_left();
             } else if (!strcmp(buf, "RGT")) {
                 drive_right();
+            } else if (!strcmp(buf, "STP")) {
+                drive_brake();
             } else if (!strcmp(buf, "CST")) {
                 drive_coast();
             } else {
