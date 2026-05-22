@@ -12,12 +12,27 @@
 #define WIFI_PASS ""
 #endif
 
-#define QUEUE_SIZE 256
+#define QUEUE_SIZE    256
+#define GREEN_LED_PIN 15  // GPIO 15
+#define RED_LED_PIN   14  // GPIO 14
 
 void process_loop(queue_t* q, char* buf);
 
 int main() {
     stdio_init_all();
+    gpio_init_mask((1 << RED_LED_PIN) | (1 << GREEN_LED_PIN));
+    gpio_set_dir_out_masked((1 << RED_LED_PIN) | (1 << GREEN_LED_PIN));
+    gpio_put(RED_LED_PIN, true);
+    gpio_put(GREEN_LED_PIN, false);
+
+    printf("gpio 15 is OUT: %s\n",
+           gpio_is_dir_out(GREEN_LED_PIN) ? "true" : "false");
+    printf("gpio 15 status: %s\n",
+           gpio_get_out_level(GREEN_LED_PIN) ? "true" : "false");
+    printf("gpio 14 is OUT: %s\n",
+           gpio_is_dir_out(RED_LED_PIN) ? "true" : "false");
+    printf("gpio 14 status: %s\n",
+           gpio_get_out_level(RED_LED_PIN) ? "true" : "false");
 
     queue_t q;
     queue_init(&q, sizeof(char), QUEUE_SIZE);
@@ -34,6 +49,7 @@ int main() {
         printf("Wi-Fi connection failed\n");
         cyw43_arch_deinit();
     } else {
+        gpio_xor_mask((1 << GREEN_LED_PIN) | (1 << RED_LED_PIN));
         Ip4Addr addr;
         get_ip4_addr(addr);
 
