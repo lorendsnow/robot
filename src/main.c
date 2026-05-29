@@ -1,7 +1,7 @@
 #include "pico/stdlib.h"
 
-#include "drivetrain.h"
 #include "server.h"
+#include "drivetrain.h"
 #include "tcp_fns.h"
 
 #ifndef SSID

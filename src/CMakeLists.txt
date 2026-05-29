@@ -1,23 +1,27 @@
-add_subdirectory(server)
-add_subdirectory(drivetrain)
-
-add_executable(robot main.c tcp_fns.c)
+add_executable(robot
+    main.c
+    drivetrain.c
+    server.c 
+    tcp_fns.c
+)
 
 pico_set_program_name(robot "robot")
 pico_set_program_version(robot "0.1")
 
 pico_enable_stdio_uart(robot 1)
 
-target_link_libraries(robot
-    PRIVATE
-        pico_stdlib
-        drivetrain
-        server
-)
-
 target_include_directories(robot
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
+)
+
+target_link_libraries(robot
+    PRIVATE
+        pico_cyw43_arch_lwip_threadsafe_background
+        pico_lwip
+        pico_lwip_arch
+        pico_lwip_nosys
+        pico_stdlib
 )
 
 if(DEFINED ENV{SSID})
@@ -29,13 +33,3 @@ if(DEFINED ENV{WIFI_PASS})
 endif()
 
 pico_add_extra_outputs(robot)
-
-add_executable(drivetest drive.c)
-
-pico_enable_stdio_usb(drivetest 1)
-
-target_link_libraries(drivetest
-    PRIVATE
-        pico_stdlib
-        drivetrain
-)
