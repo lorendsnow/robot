@@ -28,6 +28,24 @@ typedef enum ServerErr {
 
 typedef uint8_t Ip4Addr[4];
 
+/**
+ * Represents the type of message being sent in the TLV message format.
+ */
+typedef enum MessageType {
+    ACK   = 0,
+    DRIVE = 1,
+    DATA  = 2,
+} MessageType;
+
+/**
+ * Represents a TCP message having a type, payload length, and value (payload).
+ */
+typedef struct TLVMessage {
+    MessageType type;
+    uint32_t    len;
+    uint32_t    payload;
+} TLVMessage;
+
 ServerErr server_init(Server* s, tcp_accept_fn accept_fn);
 void      get_ip4_addr(Ip4Addr addr);
 ServerErr wifi_connect(char* ssid, char* pw);
