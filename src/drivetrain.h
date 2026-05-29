@@ -14,13 +14,13 @@
  */
 typedef uint8_t drive_state_t;
 
-void   drivetrain_init(void);
-void   drive_fwd(void);
-void   drive_reverse(void);
-void   drive_brake(void);
-void   drive_coast(void);
-void   drive_left(void);
-void   drive_right(void);
-int8_t drive_set_state(drive_state_t state);
+void    drivetrain_init(void);
+void    drive_fwd(void);
+void    drive_reverse(void);
+void    drive_brake(void);
+void    drive_coast(void);
+void    drive_left(void);
+void    drive_right(void);
+uint8_t drive_set_state(drive_state_t state);
 
 #endif  // _DRIVETRAIN_H

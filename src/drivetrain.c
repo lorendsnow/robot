@@ -147,7 +147,7 @@ void drive_right(void) {
     print_state();
 }
 
-int8_t drive_set_state(drive_state_t state) {
+uint8_t drive_set_state(drive_state_t state) {
     // can't go fwd & rev or lft & rgt at same time
     if (BAD_STATE(state)) {
         drive_brake();  // stop everything
