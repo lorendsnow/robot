@@ -33,13 +33,23 @@
 
 #define ALL_GPIO (ENABLES | INPUTS)  /// All GPIO pins
 
-// state is a bitmask that holds the current drive state.
-// bit 0 - forward
-// bit 1 - reverse
-// bit 2 - left
-// bit 3 - right
-// bit 4 - coast (wheels unlocked)
-static uint8_t state = 0;
+/* Drive state bit-shifts */
+#define FWD 1
+#define REV (1 << 1)
+#define LFT (1 << 2)
+#define RGT (1 << 3)
+
+/* Macros to check drive states */
+#define BRAKING_STATE(x)  (!(x & (FWD | REV)))
+#define FWD_STATE(x)      (x & FWD)
+#define REV_STATE(x)      (x & REV)
+#define STRAIGHT_STATE(x) (!(x & (LFT | RGT)))
+#define LFT_STATE(x)      (x & LFT)
+#define RGT_STATE(x)      (x & RGT)
+#define BAD_STATE(x) \
+    (((x & (FWD | REV)) == (FWD | REV)) || ((x & (LFT | RGT)) == (LFT | RGT)))
+
+static drive_state_t _state = 0;
 
 void print_bits(uint8_t num) {
     printf("0b");
@@ -50,7 +60,7 @@ void print_bits(uint8_t num) {
 
 void print_state(void) {
     printf("current drive state: ");
-    print_bits(state);
+    print_bits(_state);
     puts("");
 }
 
@@ -62,7 +72,7 @@ void drivetrain_init(void) {
 }
 
 void drive_fwd(void) {
-    if (state & (1 << 1)) {  // brake if we're reversing
+    if (_state & (1 << 1)) {  // brake if we're reversing
         printf("we're going in reverse, gonna brake!\n");
         drive_brake();
         return;
@@ -73,16 +83,16 @@ void drive_fwd(void) {
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT2 | REAR_INPUT4);
 
     // clear reverse and direction bits and set fwd bit
-    state &= ~(1 << 1);
-    state &= ~(1 << 2);
-    state &= ~(1 << 3);
-    state |= 1;
+    _state &= ~(1 << 1);
+    _state &= ~(1 << 2);
+    _state &= ~(1 << 3);
+    _state |= 1;
 
     print_state();
 }
 
 void drive_reverse(void) {
-    if (state & (1)) {  // brake if we're going forward
+    if (_state & (1)) {  // brake if we're going forward
         printf("we're going forward, gonna brake!\n");
         drive_brake();
         return;
@@ -93,24 +103,24 @@ void drive_reverse(void) {
                   ENABLES);
 
     // clear fwd and directions bits and set reverse bit
-    state &= ~(1);
-    state &= ~(1 << 2);
-    state &= ~(1 << 3);
-    state |= (1 << 1);
+    _state &= ~(1);
+    _state &= ~(1 << 2);
+    _state &= ~(1 << 3);
+    _state |= (1 << 1);
 
     print_state();
 }
 
 void drive_brake(void) {
     gpio_set_mask(ALL_GPIO);
-    state = 0;
+    _state = 0;
 
     print_state();
 }
 
 void drive_coast(void) {
     gpio_clr_mask(ENABLES);
-    state &= 1 << 5;
+    _state &= 1 << 5;
 
     print_state();
 }
@@ -120,8 +130,8 @@ void drive_left(void) {
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT3);
 
     // set left bit and clear right bit
-    state |= (1 << 2);
-    state &= ~(1 << 3);
+    _state |= (1 << 2);
+    _state &= ~(1 << 3);
 
     print_state();
 }
@@ -131,8 +141,33 @@ void drive_right(void) {
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT3);
 
     // set right bit and clear left bit
-    state |= (1 << 3);
-    state &= ~(1 << 2);
+    _state |= (1 << 3);
+    _state &= ~(1 << 2);
 
     print_state();
+}
+
+int8_t drive_set_state(drive_state_t state) {
+    // can't go fwd & rev or lft & rgt at same time
+    if (BAD_STATE(state)) {
+        drive_brake();  // stop everything
+        return 1;
+    }
+
+    if (BRAKING_STATE(state)) {
+        drive_brake();
+        return 0;
+    }
+
+    if (FWD_STATE(state)) {
+        drive_fwd();
+    } else {
+        drive_reverse();
+    }
+
+    if (!STRAIGHT_STATE(state)) {
+        LFT_STATE(state) ? drive_left() : drive_right();
+    }
+
+    return 0;
 }
