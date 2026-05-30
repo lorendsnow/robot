@@ -7,27 +7,6 @@
 #include "pico/stdlib.h"
 #include "lwip/tcp.h"
 
-typedef struct Server {
-    struct tcp_pcb* pcb;
-    queue_t*        queue;
-    err_t*          err;
-} Server;
-
-typedef struct Conn {
-    struct tcp_pcb* pcb;
-    queue_t*        queue;
-    uint8_t         buf[256];
-} Conn;
-
-typedef enum ServerErr {
-    OK      = 0,
-    INIT    = 1,
-    CONNECT = 2,
-    BIND    = 3,
-} ServerErr;
-
-typedef uint8_t Ip4Addr[4];
-
 /**
  * Represents the type of message being sent in the TLV message format.
  */
@@ -46,8 +25,29 @@ typedef struct TLVMessage {
     uint32_t    payload;
 } TLVMessage;
 
+typedef struct Server {
+    struct tcp_pcb* pcb;
+    queue_t*        queue;
+    err_t*          err;
+} Server;
+
+typedef struct Conn {
+    struct tcp_pcb* pcb;
+    queue_t*        queue;
+} Conn;
+
+typedef enum ServerErr {
+    OK      = 0,
+    INIT    = 1,
+    CONNECT = 2,
+    BIND    = 3,
+} ServerErr;
+
+typedef uint8_t Ip4Addr[4];
+
 ServerErr server_init(Server* s, tcp_accept_fn accept_fn);
 void      get_ip4_addr(Ip4Addr addr);
 ServerErr wifi_connect(char* ssid, char* pw);
+void      print_msg(TLVMessage* msg, bool newline);
 
 #endif  // _SERVER_H

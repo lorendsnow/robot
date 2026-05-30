@@ -17,24 +17,27 @@ err_t receive(void* arg, struct tcp_pcb* tcp_pcb, struct pbuf* p, err_t err) {
     }
 
     printf("number of bytes received: %d\n", p->tot_len);
+    if (p->tot_len % sizeof(TLVMessage) != 0) {
+        printf(
+            "warning: received bytes don't align on a message length boundary; "
+            "got %d extra bytes\n",
+            p->tot_len % sizeof(TLVMessage));
+    }
 
+    /* copy messages into queue for processing */
+    uint8_t msgs = 0;
     for (struct pbuf* q = p; q != NULL; q = q->next) {
-        uint16_t copied = pbuf_copy_partial(q, ((Conn*)arg)->buf, 1024, 0);
-        if (!copied) {
-            printf("failed to copy bytes\n");
-            return ERR_BUF;
+        uint16_t copied = 0;
+        while (copied <= q->len - sizeof(TLVMessage)) {
+            queue_add_blocking(((Conn*)arg)->queue, q->payload + copied);
+            copied += sizeof(TLVMessage);
+            msgs++;
         }
     }
 
+    printf("added %d messages to queue\n", msgs);
+
     tcp_recved(tcp_pcb, p->tot_len);
-
-    printf("adding bytes to queue: ");
-    for (int i = 0; i < p->tot_len; i++) {
-        printf("%X ", ((Conn*)arg)->buf[i]);
-        queue_add_blocking(((Conn*)arg)->queue, ((Conn*)arg)->buf + i);
-    }
-    puts("");
-
     pbuf_free(p);
 
     printf("server done receiving\n");
