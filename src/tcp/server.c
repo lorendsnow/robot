@@ -1,4 +1,7 @@
-#include "server.h"
+#include "tcp/server.h"
+
+#include "lwipopts.h"
+#include "pico/cyw43_arch.h"
 
 ServerErr server_init(Server* s, tcp_accept_fn accept_fn) {
     cyw43_arch_lwip_begin();
@@ -33,10 +36,6 @@ ServerErr server_init(Server* s, tcp_accept_fn accept_fn) {
     return OK;
 }
 
-void get_ip4_addr(Ip4Addr addr) {
-    memcpy(addr, &(cyw43_state.netif[0].ip_addr.addr), sizeof(Ip4Addr));
-}
-
 ServerErr wifi_connect(char* ssid, char* pw) {
     if (cyw43_arch_init()) {
         printf("Wi-Fi init failed\n");
@@ -51,28 +50,4 @@ ServerErr wifi_connect(char* ssid, char* pw) {
     }
 
     return OK;
-}
-
-void print_msg(TLVMessage* msg, bool newline) {
-    char* type;
-    switch (msg->type) {
-        case ACK:
-            type = "ACK";
-            break;
-        case DRIVE:
-            type = "DRIVE";
-            break;
-        case DATA:
-            type = "DATA";
-            break;
-        default:
-            type = "unknown";
-            break;
-    }
-
-    printf("TLVMessage{type: %s, len: %d, payload: %X}", type, msg->len,
-           msg->payload);
-    if (newline) {
-        puts("");
-    }
 }

@@ -1,0 +1,4 @@
+#ifndef _BLUETOOTH_CLIENT_H
+#define _BLUETOOTH_CLIENT_H
+
+#endif  // _BLUETOOTH_CLIENT_H

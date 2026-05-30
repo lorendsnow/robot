@@ -1,6 +1,6 @@
 #include "pico/printf.h"
 
-#include "drivetrain.h"
+#include "motor_control.h"
 
 /* Left-Hand side input pins */
 #define FRONT_ENA    (1 << 7)  /// Physical pin 10 / GPIO pin 7

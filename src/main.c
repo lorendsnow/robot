@@ -1,7 +1,9 @@
 #include "pico/stdlib.h"
 
-#include "server.h"
-#include "drivetrain.h"
+#include "bluetooth/msg_protocol.h"
+#include "motor_control.h"
+#include "tcp/server.h"
+
 #include "tcp_fns.h"
 
 #ifndef SSID
@@ -30,6 +32,8 @@ int main() {
 
     drivetrain_init();
 
+    bt_server_init();
+
     sleep_ms(200);
 
     if (wifi_connect(SSID, WIFI_PASS)) {
@@ -37,10 +41,6 @@ int main() {
         cyw43_arch_deinit();
     } else {
         gpio_xor_mask((1 << GREEN_LED_PIN) | (1 << RED_LED_PIN));
-        Ip4Addr addr;
-        get_ip4_addr(addr);
-
-        printf("IP address %d.%d.%d.%d\n", addr[0], addr[1], addr[2], addr[3]);
     }
 
     if (server_init(&s, accept)) {

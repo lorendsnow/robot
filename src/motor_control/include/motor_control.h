@@ -1,5 +1,5 @@
-#ifndef _DRIVETRAIN_H
-#define _DRIVETRAIN_H
+#ifndef _MOTOR_CONTROL_H
+#define _MOTOR_CONTROL_H
 
 #include "pico/stdlib.h"
 
@@ -23,4 +23,4 @@ void    drive_left(void);
 void    drive_right(void);
 uint8_t drive_set_state(drive_state_t state);
 
-#endif  // _DRIVETRAIN_H
+#endif  // _MOTOR_CONTROL_H
