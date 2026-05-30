@@ -1,8 +1,8 @@
 #include "lwip/tcp.h"
-#include "pico/cyw43_arch.h"
 
+#include "tcp/server.h"
+#include "bluetooth/msg_protocol.h"
 #include "tcp_fns.h"
-#include "server.h"
 
 err_t receive(void* arg, struct tcp_pcb* tcp_pcb, struct pbuf* p, err_t err) {
     printf("server received data from %d.%d.%d.%d\n",
