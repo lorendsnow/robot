@@ -1,7 +1,7 @@
 #include "pico/stdlib.h"
 
-#include "drivetrain.h"
 #include "server.h"
+#include "drivetrain.h"
 #include "tcp_fns.h"
 
 #ifndef SSID
@@ -12,11 +12,10 @@
 #define WIFI_PASS ""
 #endif
 
-#define QUEUE_SIZE    256
 #define GREEN_LED_PIN 15  // GPIO 15
 #define RED_LED_PIN   14  // GPIO 14
 
-void process_loop(queue_t* q, char* buf);
+void process_loop(queue_t* q);
 
 int main() {
     stdio_init_all();
@@ -25,25 +24,13 @@ int main() {
     gpio_put(RED_LED_PIN, true);
     gpio_put(GREEN_LED_PIN, false);
 
-    printf("gpio 15 is OUT: %s\n",
-           gpio_is_dir_out(GREEN_LED_PIN) ? "true" : "false");
-    printf("gpio 15 status: %s\n",
-           gpio_get_out_level(GREEN_LED_PIN) ? "true" : "false");
-    printf("gpio 14 is OUT: %s\n",
-           gpio_is_dir_out(RED_LED_PIN) ? "true" : "false");
-    printf("gpio 14 status: %s\n",
-           gpio_get_out_level(RED_LED_PIN) ? "true" : "false");
-
     queue_t q;
-    queue_init(&q, sizeof(char), QUEUE_SIZE);
+    queue_init(&q, sizeof(TLVMessage), 256);
     struct Server s = {.queue = &q};
 
     drivetrain_init();
 
-    sleep_ms(1000);
-
-    printf("SSID: %s\n", SSID);
-    printf("Password: %s\n", WIFI_PASS);
+    sleep_ms(200);
 
     if (wifi_connect(SSID, WIFI_PASS)) {
         printf("Wi-Fi connection failed\n");
@@ -62,68 +49,44 @@ int main() {
         printf("successfully initiated server listen\n");
     }
 
-    char buf[4];
-    printf("entering process loop\n");
-    process_loop(&q, buf);
+    process_loop(&q);
 
     return 0;
 }
 
-int parse_cmd(queue_t* q, char* buf) {
-    char c;
-    queue_remove_blocking(q, &c);
-    while (c != ':') {
-        if (queue_is_empty(q)) {
-            return 0;
-        }
-        queue_remove_blocking(q, &c);
-    }
-
-    for (int i = 0; i < 3; i++) {
-        if (queue_is_empty(q)) {
-            return -1;
-        }
-        queue_remove_blocking(q, &c);
-        buf[i] = c;
-    }
-
-    buf[3] = 0;
-    return 0;
-}
-
-void process_loop(queue_t* q, char* buf) {
+void process_loop(queue_t* q) {
     printf("in the process loop\n");
+    TLVMessage msg;
 
     while (true) {
         while (!queue_is_empty(q)) {
             printf("parsing commands from queue\n");
-            switch (parse_cmd(q, buf)) {
-                case -1:
-                    printf(
-                        "error parsing command - got an incomplete command\n");
-                    continue;
-                case 1:
-                    printf("completed parsing - queue is empty\n");
-                    continue;
-                default:
-                    printf("command parsed to %s\n", buf);
-                    break;
-            }
+            queue_remove_blocking(q, &msg);
 
-            if (!strcmp(buf, "FWD")) {
-                drive_fwd();
-            } else if (!strcmp(buf, "REV")) {
-                drive_reverse();
-            } else if (!strcmp(buf, "LFT")) {
-                drive_left();
-            } else if (!strcmp(buf, "RGT")) {
-                drive_right();
-            } else if (!strcmp(buf, "STP")) {
-                drive_brake();
-            } else if (!strcmp(buf, "CST")) {
-                drive_coast();
-            } else {
-                printf("got bad command %s\n", buf);
+            printf("pulled message: ");
+            print_msg(&msg, true);
+
+            switch (msg.type) {
+                case ACK:
+                    printf("pulled ACK message from queue\n");
+                    break;
+                case DRIVE:
+                    if (drive_set_state((uint8_t)msg.payload)) {
+                        printf(
+                            "error occurred while trying to set drive state to "
+                            "%d\n",
+                            (uint8_t)msg.payload);
+                    }
+                    break;
+                case DATA:
+                    printf("pulled data message from queue with payload %X\n",
+                           msg.payload);
+                    break;
+                default:
+                    printf(
+                        "pulled message from queue with unkown type value %d\n",
+                        msg.type);
+                    break;
             }
         }
     }
