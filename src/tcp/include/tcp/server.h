@@ -1,5 +1,5 @@
-#ifndef TCP_SERVER_H
-#define TCP_SERVER_H
+#ifndef _TCP_SERVER_H
+#define _TCP_SERVER_H
 
 #include "lwip/tcp.h"
 #include "pico/stdlib.h"
@@ -26,4 +26,4 @@ typedef enum ServerErr {
 ServerErr server_init(Server* s, tcp_accept_fn accept_fn);
 ServerErr wifi_connect(char* ssid, char* pw);
 
-#endif  // TCP_SERVER_H
+#endif  // _TCP_SERVER_H
