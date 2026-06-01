@@ -1,24 +1,39 @@
+#include "hardware/pwm.h"
 #include "pico/printf.h"
 
 #include "motor_control.h"
 
-/* Left-Hand side input pins */
-#define FRONT_ENA    (1 << 7)  /// Physical pin 10 / GPIO pin 7
-#define FRONT_INPUT1 (1 << 6)  /// Physical pin 9 / GPIO pin 6
-#define FRONT_INPUT2 (1 << 5)  /// Physical pin 7 / GPIO pin 5
+/* Pin Definitions */
+#define FRONT_ENA_PIN    7   /// Physical pin 10 / GPIO pin 7
+#define FRONT_INPUT1_PIN 6   /// Physical pin 9 / GPIO pin 6
+#define FRONT_INPUT2_PIN 5   /// Physical pin 7 / GPIO pin 5
+#define REAR_ENA_PIN     26  /// Physical pin 31 / GPIO pin 26
+#define REAR_INPUT1_PIN  22  /// Physical pin 29 / GPIO pin 22
+#define REAR_INPUT2_PIN  21  /// Physical pin 27 / GPIO pin 21
+#define FRONT_ENB_PIN    2   /// Physical pin 4 / GPIO pin 2
+#define FRONT_INPUT3_PIN 4   /// Physical pin 6 / GPIO pin 4
+#define FRONT_INPUT4_PIN 3   /// Physical pin 5 / GPIO pin 3
+#define REAR_ENB_PIN     18  /// Physical pin 24 / GPIO pin 18
+#define REAR_INPUT3_PIN  20  /// Physical pin 26 / GPIO pin 20
+#define REAR_INPUT4_PIN  19  /// Physical pin 25 / GPIO pin 19
 
-#define REAR_ENA    (1 << 26)  /// Physical pin 31 / GPIO pin 26
-#define REAR_INPUT1 (1 << 22)  /// Physical pin 29 / GPIO pin 22
-#define REAR_INPUT2 (1 << 21)  /// Physical pin 27 / GPIO pin 21
+/* Left-Hand side bitmasks */
+#define FRONT_ENA    (1 << FRONT_ENA_PIN)
+#define FRONT_INPUT1 (1 << FRONT_INPUT1_PIN)
+#define FRONT_INPUT2 (1 << FRONT_INPUT2_PIN)
 
-/* Right-hand side input pins */
-#define FRONT_ENB    (1 << 2)  /// Physical pin 4 / GPIO pin 2
-#define FRONT_INPUT3 (1 << 4)  /// Physical pin 6 / GPIO pin 4
-#define FRONT_INPUT4 (1 << 3)  /// Physical pin 5 / GPIO pin 3
+#define REAR_ENA    (1 << REAR_ENA_PIN)
+#define REAR_INPUT1 (1 << REAR_INPUT1_PIN)
+#define REAR_INPUT2 (1 << REAR_INPUT2_PIN)
 
-#define REAR_ENB    (1 << 18)  /// Physical pin 24 / GPIO pin 18
-#define REAR_INPUT3 (1 << 20)  /// Physical pin 26 / GPIO pin 20
-#define REAR_INPUT4 (1 << 19)  /// Physical pin 25 / GPIO pin 19
+/* Right-hand side bitmasks */
+#define FRONT_ENB    (1 << FRONT_ENB_PIN)
+#define FRONT_INPUT3 (1 << FRONT_INPUT3_PIN)
+#define FRONT_INPUT4 (1 << FRONT_INPUT4_PIN)
+
+#define REAR_ENB    (1 << REAR_ENB_PIN)
+#define REAR_INPUT3 (1 << REAR_INPUT3_PIN)
+#define REAR_INPUT4 (1 << REAR_INPUT4_PIN)
 
 /* Aggregated bitmasks */
 #define REAR_ENABLES  (REAR_ENA | REAR_ENB)
