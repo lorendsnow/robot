@@ -3,6 +3,8 @@
 
 #include "motor_control.h"
 
+#define PWM_WRAP 99
+
 /* Pin Definitions */
 #define FRONT_ENA_PIN    7   /// Physical pin 10 / GPIO pin 7
 #define FRONT_INPUT1_PIN 6   /// Physical pin 9 / GPIO pin 6
@@ -64,7 +66,9 @@
 #define BAD_STATE(x) \
     (((x & (FWD | REV)) == (FWD | REV)) || ((x & (LFT | RGT)) == (LFT | RGT)))
 
-static drive_state_t _state = 0;
+static drive_state_t  _state     = 0;
+const static uint32_t enables[4] = {FRONT_ENA_PIN, FRONT_ENB_PIN, REAR_ENA_PIN,
+                                    REAR_ENB_PIN};
 
 void print_bits(uint8_t num) {
     printf("0b");
@@ -80,9 +84,16 @@ void print_state(void) {
 }
 
 void motor_control_init(void) {
-    gpio_init_mask(ALL_GPIO);
-    gpio_set_dir_out_masked(ALL_GPIO);
+    gpio_init_mask(INPUTS);
+    gpio_set_dir_out_masked(INPUTS);
+
     gpio_set_function_masked(ENABLES, GPIO_FUNC_PWM);
+    for (int i = 0; i < 4; i++) {
+        uint slicenum = pwm_gpio_to_slice_num(enables[i]);
+        pwm_set_wrap(slicenum, PWM_WRAP);
+        pwm_set_gpio_level(slicenum, 0);
+        pwm_set_enabled(slicenum, true);
+    }
 
     drive_brake();
     print_state();
