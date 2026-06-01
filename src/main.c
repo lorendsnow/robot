@@ -30,7 +30,7 @@ int main() {
     queue_init(&q, sizeof(TLVMessage), 256);
     struct Server s = {.queue = &q};
 
-    drivetrain_init();
+    motor_control_init();
 
     bt_server_init();
 

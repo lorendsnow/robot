@@ -64,7 +64,7 @@ void print_state(void) {
     puts("");
 }
 
-void drivetrain_init(void) {
+void motor_control_init(void) {
     gpio_init_mask(ALL_GPIO);
     gpio_set_dir_out_masked(ALL_GPIO);
     drive_brake();

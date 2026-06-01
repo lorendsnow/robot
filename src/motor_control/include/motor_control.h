@@ -14,7 +14,7 @@
  */
 typedef uint8_t drive_state_t;
 
-void    drivetrain_init(void);
+void    motor_control_init(void);
 void    drive_fwd(void);
 void    drive_reverse(void);
 void    drive_brake(void);
