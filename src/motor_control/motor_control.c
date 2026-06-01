@@ -67,6 +67,8 @@ void print_state(void) {
 void motor_control_init(void) {
     gpio_init_mask(ALL_GPIO);
     gpio_set_dir_out_masked(ALL_GPIO);
+    gpio_set_function_masked(ENABLES, GPIO_FUNC_PWM);
+
     drive_brake();
     print_state();
 }
