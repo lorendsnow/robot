@@ -3,6 +3,8 @@
 
 #include "pico/stdlib.h"
 
+#define PWM_MAX 99
+
 /**
  * Represents a desired drive state, as a bitmask.
  *

@@ -3,8 +3,6 @@
 
 #include "motor_control.h"
 
-#define PWM_WRAP 99
-
 /* Pin Definitions */
 #define FRONT_ENA_PIN    7   /// Physical pin 10 / GPIO pin 7
 #define FRONT_INPUT1_PIN 6   /// Physical pin 9 / GPIO pin 6
@@ -90,7 +88,7 @@ void motor_control_init(void) {
     gpio_set_function_masked(ENABLES, GPIO_FUNC_PWM);
     for (int i = 0; i < 4; i++) {
         uint slicenum = pwm_gpio_to_slice_num(enables[i]);
-        pwm_set_wrap(slicenum, PWM_WRAP);
+        pwm_set_wrap(slicenum, PWM_MAX);
         pwm_set_gpio_level(slicenum, 0);
         pwm_set_enabled(slicenum, true);
     }
