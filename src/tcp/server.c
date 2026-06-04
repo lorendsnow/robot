@@ -1,7 +1,6 @@
-#include "tcp/server.h"
-#include "tcp/lwipopts.h"
+#include "pico/printf.h"
 
-#include "pico/cyw43_arch.h"
+#include "tcp/server.h"
 
 ServerErr server_init(Server* s, tcp_accept_fn accept_fn) {
     cyw43_arch_lwip_begin();

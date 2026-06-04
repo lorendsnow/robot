@@ -1,6 +1,7 @@
 #include "pico/stdlib.h"
 
 #include "bluetooth/msg_protocol.h"
+#include "bluetooth/server.h"
 #include "motor_control.h"
 #include "tcp/server.h"
 

@@ -1,9 +1,11 @@
 #ifndef _TCP_SERVER_H
 #define _TCP_SERVER_H
 
-#include "lwip/tcp.h"
+#include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "pico/util/queue.h"
+
+#include "lwip/tcp.h"
 
 typedef struct Server {
     struct tcp_pcb* pcb;

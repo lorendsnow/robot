@@ -1,4 +1,5 @@
 #include "btstack.h"
+#include "pico/printf.h"
 
 #include "bluetooth/server.h"
 
@@ -19,7 +20,7 @@ void bt_server_init(void) {
     l2cap_init();
 
     rfcomm_init();
-    rfcomm_register_service(packet_handler, RFCOMM_SERVER_CHANNEL, 0xffff);
+    rfcomm_register_service(packet_handler, RFCOMM_SERVER_CHANNEL, UINT16_MAX);
 
     sdp_init();
     memset(spp_service_buffer, 0, sizeof(spp_service_buffer));

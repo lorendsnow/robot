@@ -1,3 +1,5 @@
+#include "pico/printf.h"
+
 #include "bluetooth/msg_protocol.h"
 
 void print_msg(TLVMessage* msg, bool newline) {

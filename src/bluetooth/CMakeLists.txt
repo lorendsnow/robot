@@ -7,11 +7,16 @@ add_library(bluetooth
 target_link_libraries(bluetooth
     PUBLIC
         pico_stdlib
-    PRIVATE
         pico_btstack_classic
+        pico_btstack_cyw43
+        pico_cyw43_arch_lwip_threadsafe_background
+        pico_cyw43_driver
+        pico_lwip
 )
 
 target_include_directories(bluetooth
     PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/include
 )
+
+pico_enable_stdio_uart(bluetooth 1)
