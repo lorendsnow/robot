@@ -6,7 +6,7 @@
 // binary attribute representation:
 // - size in bytes (16), flags(16), handle (16), uuid (16/128), value(...)
 
-#include <stdint.h>
+#include "pico/stdlib.h"
 
 // Reference: https://en.cppreference.com/w/cpp/feature_test
 #if __cplusplus >= 200704L

@@ -47,3 +47,21 @@ target_link_libraries(btclient
 )
 
 pico_add_extra_outputs(btclient)
+
+add_executable(btserver test_bt_server.c)
+pico_set_program_name(btserver "btserver")
+pico_set_program_version(btserver "0.1")
+
+pico_enable_stdio_uart(btserver 1)
+
+target_link_libraries(btserver
+    PRIVATE
+        pico_btstack_classic
+        pico_btstack_cyw43
+        pico_cyw43_driver
+        pico_lwip
+        pico_stdlib
+        bluetooth
+)
+
+pico_add_extra_outputs(btserver)
