@@ -1,15 +1,15 @@
 #include "btstack.h"
 #include "pico/printf.h"
+#include "pico/sync.h"
+
+#include "thumbstick.h"
 
 #include "bluetooth/ble_server.h"
 #include "controller_server.h"
 
 #define APP_AD_FLAGS 0x06
 
-typedef struct Coords {
-    int8_t x;
-    int8_t y;
-} Coords;
+static struct thumbstick_state state;
 
 const uint8_t adv_data[] = {
     /* Flags general discoverable */
@@ -42,7 +42,6 @@ static btstack_packet_callback_registration_t sm_event_callback_registration;
 static hci_con_handle_t                       con_handle;
 
 static uint16_t le_notification_enabled = 0;
-static Coords   coords                  = {.x = 0, .y = 0};
 
 static uint16_t att_read_callback(hci_con_handle_t connection_handle,
                                   uint16_t att_handle, uint16_t offset,
@@ -51,9 +50,12 @@ static uint16_t att_read_callback(hci_con_handle_t connection_handle,
 
     if (att_handle ==
         ATT_CHARACTERISTIC_0f9e4129_0220_4669_82dc_79b378fa1dff_01_VALUE_HANDLE) {
-        return att_read_callback_handle_blob((const uint8_t*)&coords,
-                                             sizeof(coords), offset, buffer,
-                                             buffer_size);
+        mutex_enter_blocking(&state_mtx);
+        uint16_t result = ((const uint8_t*)&state, sizeof(state), offset,
+                           buffer, buffer_size);
+        mutex_exit(&state_mtx);
+
+        return result;
     }
 
     return 0;
@@ -99,7 +101,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel,
             att_server_notify(
                 con_handle,
                 ATT_CHARACTERISTIC_0f9e4129_0220_4669_82dc_79b378fa1dff_01_VALUE_HANDLE,
-                (uint8_t*)&coords, sizeof(coords));
+                (uint8_t*)&state, sizeof(state));
             break;
         default:
             break;
@@ -107,6 +109,12 @@ static void packet_handler(uint8_t packet_type, uint16_t channel,
 }
 
 void bt_server_init(void) {
+    btstack_data_source_callback_type_t cb_type    = DATA_SOURCE_CALLBACK_POLL;
+    btstack_data_source_t               thumbstick = {
+        .source = (void*)&state,
+        .flags  = cb_type,
+    };
+
     l2cap_init();
 
     sm_init();
@@ -134,3 +142,5 @@ void bt_server_init(void) {
 
     hci_power_control(HCI_POWER_ON);
 }
+
+struct thumbstick_state* get_state(void) { return &state; }

@@ -2,7 +2,7 @@
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 
-#include "bluetooth/server.h"
+#include "bluetooth/ble_server.h"
 
 int main(void) {
     stdio_init_all();

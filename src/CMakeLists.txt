@@ -1,6 +1,7 @@
 add_subdirectory(bluetooth)
 add_subdirectory(motor_control)
 add_subdirectory(tcp)
+add_subdirectory(thumbstick)
 
 # add_executable(robot
 #     main.c
@@ -38,7 +39,6 @@ pico_enable_stdio_uart(btclient 1)
 
 target_link_libraries(btclient
     PRIVATE
-        pico_btstack_classic
         pico_btstack_cyw43
         pico_cyw43_driver
         pico_lwip
@@ -56,12 +56,13 @@ pico_enable_stdio_uart(btserver 1)
 
 target_link_libraries(btserver
     PRIVATE
-        pico_btstack_classic
+        hardware_adc
         pico_btstack_cyw43
         pico_cyw43_driver
         pico_lwip
         pico_stdlib
         bluetooth
+        thumbstick
 )
 
 pico_add_extra_outputs(btserver)
