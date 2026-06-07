@@ -3,7 +3,7 @@
 #include "pico/printf.h"
 #include "pico/stdlib.h"
 
-#include "bluetooth/client.h"
+#include "bluetooth/ble_client.h"
 
 int main(void) {
     stdio_init_all();

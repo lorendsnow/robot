@@ -2,11 +2,7 @@
 #define _BLUETOOTH_SERVER_H
 
 #include "thumbstick.h"
-#include "pico/sync.h"
 
-mutex_t state_mtx;
-
-void                     bt_server_init(void);
-struct thumbstick_state* get_state(void);
+const btstack_run_loop_t* bt_server_init(async_context_t* ctx);
 
 #endif  // _BLUETOOTH_SERVER_H
