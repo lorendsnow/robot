@@ -33,4 +33,4 @@ project(robot C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-add_subdirectory(src)
+add_subdirectory(src bin)

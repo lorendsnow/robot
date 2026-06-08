@@ -19,4 +19,4 @@ target_include_directories(bluetooth
         ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
-pico_enable_stdio_uart(bluetooth 1)
+pico_btstack_make_gatt_header(bluetooth PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include/controller_server.gatt)
