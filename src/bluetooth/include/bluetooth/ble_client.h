@@ -1,8 +1,8 @@
 #ifndef _BLUETOOTH_CLIENT_H
 #define _BLUETOOTH_CLIENT_H
 
-#include "pico/cyw43_arch.h"
+#include "pico/async_context.h"
 
-void bt_client_init(void);
+const btstack_run_loop_t* bt_client_init(async_context_t* ctx);
 
 #endif  // _BLUETOOTH_CLIENT_H

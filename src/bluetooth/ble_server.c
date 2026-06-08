@@ -50,10 +50,9 @@ static uint16_t att_read_callback(hci_con_handle_t connection_handle,
 
     if (att_handle ==
         ATT_CHARACTERISTIC_0f9e4129_0220_4669_82dc_79b378fa1dff_01_VALUE_HANDLE) {
-        uint16_t result = ((const uint8_t*)&state, sizeof(state), offset,
-                           buffer, buffer_size);
-
-        return result;
+        return att_read_callback_handle_blob(
+            (const uint8_t*)&state, sizeof(state), offset, buffer,
+            buffer_size);
     }
 
     return 0;
