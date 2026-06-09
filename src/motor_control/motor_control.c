@@ -2,6 +2,7 @@
 #include "pico/printf.h"
 
 #include "motor_control.h"
+#include "thumbstick.h"
 
 /* Pin Definitions */
 #define FRONT_ENA_PIN    7   /// Physical pin 10 / GPIO pin 7
@@ -48,38 +49,19 @@
 
 #define ALL_GPIO (ENABLES | INPUTS)  /// All GPIO pins
 
-/* Drive state bit-shifts */
-#define FWD 1
-#define REV (1 << 1)
-#define LFT (1 << 2)
-#define RGT (1 << 3)
+#define PWM_MAX     99
+#define JS_DEADZONE 5  // deadzone to avoid joystick calibration issues
 
-/* Macros to check drive states */
-#define BRAKING_STATE(x)  (!(x & (FWD | REV)))
-#define FWD_STATE(x)      (x & FWD)
-#define REV_STATE(x)      (x & REV)
-#define STRAIGHT_STATE(x) (!(x & (LFT | RGT)))
-#define LFT_STATE(x)      (x & LFT)
-#define RGT_STATE(x)      (x & RGT)
-#define BAD_STATE(x) \
-    (((x & (FWD | REV)) == (FWD | REV)) || ((x & (LFT | RGT)) == (LFT | RGT)))
+/*
+ * For curved turns, scale down the forward PWM to the turn-side motors
+ * relative to the non-turn-side motors
+ */
+#define turn_factor_uncapped(x, y) \
+    ((((float)PWM_MAX - (float)x) / (float)PWM_MAX) * y)
+#define turn_factor_capped(x, y) (y - (x / 2))
 
-static drive_state_t  _state     = 0;
 const static uint32_t enables[4] = {FRONT_ENA_PIN, FRONT_ENB_PIN, REAR_ENA_PIN,
                                     REAR_ENB_PIN};
-
-void print_bits(uint8_t num) {
-    printf("0b");
-    for (int i = 7; i >= 0; i--) {
-        printf("%c", (num & (1 << i)) ? '1' : '0');
-    }
-}
-
-void print_state(void) {
-    printf("current drive state: ");
-    print_bits(_state);
-    puts("");
-}
 
 void motor_control_init(void) {
     gpio_init_mask(INPUTS);
@@ -89,64 +71,71 @@ void motor_control_init(void) {
     for (int i = 0; i < 4; i++) {
         uint slicenum = pwm_gpio_to_slice_num(enables[i]);
         pwm_set_wrap(slicenum, PWM_MAX);
-        pwm_set_gpio_level(slicenum, 0);
+        pwm_set_gpio_level(enables[i], 0);
         pwm_set_enabled(slicenum, true);
     }
 
     drive_brake();
-    print_state();
+}
+
+void set_speed(int8_t x, int8_t y) {
+    if (x > 0) {  // turning right
+        pwm_set_gpio_level(FRONT_ENA_PIN, y);
+        pwm_set_gpio_level(REAR_ENA_PIN, y);
+        pwm_set_gpio_level(FRONT_ENB_PIN, turn_factor_capped(x, y));
+        pwm_set_gpio_level(REAR_ENB_PIN, turn_factor_capped(x, y));
+    } else if (x < 0) {  // turning left
+        pwm_set_gpio_level(FRONT_ENA_PIN, turn_factor_capped(-x, y));
+        pwm_set_gpio_level(REAR_ENB_PIN, turn_factor_capped(-x, y));
+        pwm_set_gpio_level(FRONT_ENB_PIN, y);
+        pwm_set_gpio_level(REAR_ENB_PIN, y);
+    } else {
+        for (int i = 0; i < 4; i++) {
+            pwm_set_gpio_level(enables[i], y);
+        }
+    }
+}
+
+void set_motors_from_joystick_coords(struct thumbstick_state* coords) {
+    int8_t x =
+        (coords->x <= JS_DEADZONE && coords->x >= -JS_DEADZONE) ? 0 : coords->x;
+    int8_t y =
+        (coords->y <= JS_DEADZONE && coords->y >= -JS_DEADZONE)
+            ? 0
+            : -coords->y;  // invert y axis so up on thumbstick is forward
+
+    if (y > 0) {
+        drive_fwd();
+        set_speed(x, y);
+    } else if (y < 0) {
+        drive_reverse();
+        set_speed(x, -y);
+    } else {
+        drive_brake();
+    }
 }
 
 void drive_fwd(void) {
-    if (_state & (1 << 1)) {  // brake if we're reversing
-        printf("we're going in reverse, gonna brake!\n");
-        drive_brake();
-        return;
-    }
-
-    gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT1 | REAR_INPUT3 |
-                  ENABLES);
+    gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT1 | REAR_INPUT3);
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT2 | REAR_INPUT4);
-
-    // clear reverse and direction bits and set fwd bit
-    _state &= ~(1 << 1);
-    _state &= ~(1 << 2);
-    _state &= ~(1 << 3);
-    _state |= 1;
-
-    print_state();
 }
 
 void drive_reverse(void) {
-    if (_state & (1)) {  // brake if we're going forward
-        printf("we're going forward, gonna brake!\n");
-        drive_brake();
-        return;
-    }
-
     gpio_clr_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT1 | REAR_INPUT3);
     gpio_set_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT2 | REAR_INPUT4 |
                   ENABLES);
-
-    // clear fwd and directions bits and set reverse bit
-    _state &= ~(1);
-    _state &= ~(1 << 2);
-    _state &= ~(1 << 3);
-    _state |= (1 << 1);
 
     print_state();
 }
 
 void drive_brake(void) {
     gpio_set_mask(ALL_GPIO);
-    _state = 0;
 
     print_state();
 }
 
 void drive_coast(void) {
     gpio_clr_mask(ENABLES);
-    _state &= 1 << 5;
 
     print_state();
 }
@@ -155,10 +144,6 @@ void drive_left(void) {
     gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT4);
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT3);
 
-    // set left bit and clear right bit
-    _state |= (1 << 2);
-    _state &= ~(1 << 3);
-
     print_state();
 }
 
@@ -166,34 +151,5 @@ void drive_right(void) {
     gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT4);
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT3);
 
-    // set right bit and clear left bit
-    _state |= (1 << 3);
-    _state &= ~(1 << 2);
-
     print_state();
-}
-
-uint8_t drive_set_state(drive_state_t state) {
-    // can't go fwd & rev or lft & rgt at same time
-    if (BAD_STATE(state)) {
-        drive_brake();  // stop everything
-        return 1;
-    }
-
-    if (BRAKING_STATE(state)) {
-        drive_brake();
-        return 0;
-    }
-
-    if (FWD_STATE(state)) {
-        drive_fwd();
-    } else {
-        drive_reverse();
-    }
-
-    if (!STRAIGHT_STATE(state)) {
-        LFT_STATE(state) ? drive_left() : drive_right();
-    }
-
-    return 0;
 }

@@ -5,7 +5,7 @@
 #include "thumbstick.h"
 
 #define ADC_MAX  ((1 << 12) - 1)
-#define SCALE(x) ((((float)x / (float)ADC_MAX) * 200) - 100)
+#define scale(x) ((((float)x / (float)ADC_MAX) * 200) - 100)
 
 static uint8_t X_PIN;
 static uint8_t X_INPUT;
@@ -33,6 +33,6 @@ void thumbstick_read(struct thumbstick_state* state) {
     uint16_t y_raw = adc_read();
     printf("raw y: %d\n", y_raw);
 
-    state->x = SCALE(x_raw);
-    state->y = SCALE(y_raw);
+    state->x = scale(x_raw);
+    state->y = scale(y_raw);
 }

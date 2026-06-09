@@ -12,6 +12,7 @@ target_link_libraries(bluetooth
         pico_cyw43_driver
         pico_lwip
         thumbstick
+        motor_control
 )
 
 target_include_directories(bluetooth

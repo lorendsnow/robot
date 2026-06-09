@@ -5,6 +5,7 @@
 
 #include "bluetooth/ble_client.h"
 #include "thumbstick.h"
+#include "motor_control.h"
 
 // Service UUID: 48dc6454-5b36-425d-b974-5880528c99db
 // BTstack discovery/event APIs use big-endian (textual) byte order.
@@ -43,7 +44,7 @@ static gatt_client_service_t        controller_service;
 static gatt_client_characteristic_t thumbstick_characteristic;
 static gatt_client_notification_t   notification_listener;
 static int                          notification_listener_registered = 0;
-static int                          thumbstick_characteristic_found = 0;
+static int                          thumbstick_characteristic_found  = 0;
 
 static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                                      uint8_t* packet, uint16_t size);
@@ -110,7 +111,8 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                         break;
                     }
                     if (controller_service.start_group_handle == 0) {
-                        printf("Controller service not found. Disconnecting.\n");
+                        printf(
+                            "Controller service not found. Disconnecting.\n");
                         gap_disconnect(connection_handle);
                         break;
                     }
@@ -139,7 +141,7 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                     if (characteristic.uuid16 == 0 &&
                         memcmp(characteristic.uuid128,
                                thumbstick_characteristic_uuid, 16) == 0) {
-                        thumbstick_characteristic = characteristic;
+                        thumbstick_characteristic       = characteristic;
                         thumbstick_characteristic_found = 1;
                         printf("Thumbstick characteristic matched.\n");
                     }
@@ -209,8 +211,7 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                     if (value_length == sizeof(struct thumbstick_state)) {
                         struct thumbstick_state state;
                         memcpy(&state, value, sizeof(state));
-                        printf("Received thumbstick update - x=%d, y=%d\n",
-                               state.x, state.y);
+                        set_motors_from_joystick_coords(&state);
                     } else {
                         printf(
                             "Received notification with unexpected length %u\n",
