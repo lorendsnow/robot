@@ -5,7 +5,7 @@
 #include "thumbstick.h"
 
 #define ADC_MAX  ((1 << 12) - 1)
-#define SCALE(x) ((x * ((float)INT8_MAX / (float)(ADC_MAX))) - (INT8_MAX / 2))
+#define SCALE(x) ((((float)x / (float)ADC_MAX) * 200) - 100)
 
 static uint8_t X_PIN;
 static uint8_t X_INPUT;
