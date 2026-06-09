@@ -1,6 +1,7 @@
 #include "btstack.h"
 #include "pico/btstack_run_loop_async_context.h"
 #include "pico/printf.h"
+#include "pico/stdlib.h"
 #include "string.h"
 
 #include "bluetooth/ble_client.h"
@@ -45,6 +46,7 @@ static gatt_client_characteristic_t thumbstick_characteristic;
 static gatt_client_notification_t   notification_listener;
 static int                          notification_listener_registered = 0;
 static int                          thumbstick_characteristic_found  = 0;
+static indicator_pins_t*            indicator_pins                   = NULL;
 
 static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                                      uint8_t* packet, uint16_t size);
@@ -195,6 +197,8 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                     }
                     printf("Ready to receive thumbstick updates.\n");
                     client_state = CLIENT_READY;
+                    gpio_put(indicator_pins->green, true);
+                    gpio_put(indicator_pins->red, false);
                     break;
                 default:
                     break;
@@ -285,6 +289,8 @@ static void packet_handler(uint8_t packet_type, uint16_t channel,
             break;
 
         case HCI_EVENT_DISCONNECTION_COMPLETE:
+            gpio_put(indicator_pins->green, false);
+            gpio_put(indicator_pins->red, true);
             printf("Disconnected from Controller.\n");
             connection_handle = HCI_CON_HANDLE_INVALID;
             if (notification_listener_registered) {
@@ -307,7 +313,18 @@ static void packet_handler(uint8_t packet_type, uint16_t channel,
     }
 }
 
-const btstack_run_loop_t* bt_client_init(async_context_t* ctx) {
+void init_indicators(indicator_pins_t* pins) {
+    indicator_pins = pins;
+    gpio_init_mask((1 << pins->red) | (1 << pins->green));
+    gpio_set_dir_out_masked((1 << pins->red) | (1 << pins->green));
+    gpio_put(pins->red, true);
+    gpio_put(pins->green, false);
+}
+
+const btstack_run_loop_t* bt_client_init(async_context_t*  ctx,
+                                         indicator_pins_t* pins) {
+    init_indicators(pins);
+
     printf("setting up run loop...\n");
     const btstack_run_loop_t* runloop =
         btstack_run_loop_async_context_get_instance(ctx);

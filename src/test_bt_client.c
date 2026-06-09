@@ -10,17 +10,18 @@
 #define RED_LED_PIN   14  // GPIO 14
 
 int main(void) {
+    indicator_pins_t led_pins = {
+        .green = GREEN_LED_PIN,
+        .red   = RED_LED_PIN,
+    };
+
     stdio_init_all();
-    gpio_init_mask((1 << RED_LED_PIN) | (1 << GREEN_LED_PIN));
-    gpio_set_dir_out_masked((1 << RED_LED_PIN) | (1 << GREEN_LED_PIN));
-    gpio_put(RED_LED_PIN, true);
-    gpio_put(GREEN_LED_PIN, false);
 
     motor_control_init();
 
     cyw43_arch_init();
     async_context_t* ctx = cyw43_arch_async_context();
-    bt_client_init(ctx);
+    bt_client_init(ctx, &led_pins);
 
     btstack_run_loop_execute();
 
