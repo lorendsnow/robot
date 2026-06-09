@@ -122,34 +122,19 @@ void drive_fwd(void) {
 
 void drive_reverse(void) {
     gpio_clr_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT1 | REAR_INPUT3);
-    gpio_set_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT2 | REAR_INPUT4 |
-                  ENABLES);
-
-    print_state();
+    gpio_set_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT2 | REAR_INPUT4);
 }
 
-void drive_brake(void) {
-    gpio_set_mask(ALL_GPIO);
+void drive_brake(void) { gpio_set_mask(ALL_GPIO); }
 
-    print_state();
-}
-
-void drive_coast(void) {
-    gpio_clr_mask(ENABLES);
-
-    print_state();
-}
+void drive_coast(void) { gpio_clr_mask(ENABLES); }
 
 void drive_left(void) {
     gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT4);
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT3);
-
-    print_state();
 }
 
 void drive_right(void) {
     gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT4);
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT3);
-
-    print_state();
 }
