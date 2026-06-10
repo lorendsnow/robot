@@ -49,7 +49,7 @@
 
 #define ALL_GPIO (ENABLES | INPUTS)  /// All GPIO pins
 
-#define PWM_MAX     99
+#define PWM_MAX     100
 #define JS_DEADZONE 5  // deadzone to avoid joystick calibration issues
 
 /*
@@ -59,6 +59,12 @@
 #define turn_factor_uncapped(x, y) \
     ((((float)PWM_MAX - (float)x) / (float)PWM_MAX) * y)
 #define turn_factor_capped(x, y) (y - (x / 2))
+
+uint16_t apply_turn_factor(int8_t x, int8_t y) {
+    uint16_t new_x = ((((float)PWM_MAX - (float)x) / (float)PWM_MAX) * y);
+
+    return (new_x < 50 && y > 90) ? 50 : new_x;
+}
 
 const static uint32_t enables[4] = {FRONT_ENA_PIN, FRONT_ENB_PIN, REAR_ENA_PIN,
                                     REAR_ENB_PIN};
@@ -81,14 +87,14 @@ void motor_control_init(void) {
 void set_speed(int8_t x, int8_t y) {
     if (x > 0) {  // turning right
         pwm_set_gpio_level(FRONT_ENA_PIN, y);
-        pwm_set_gpio_level(REAR_ENA_PIN, y);
-        pwm_set_gpio_level(FRONT_ENB_PIN, turn_factor_capped(x, y));
-        pwm_set_gpio_level(REAR_ENB_PIN, turn_factor_capped(x, y));
-    } else if (x < 0) {  // turning left
-        pwm_set_gpio_level(FRONT_ENA_PIN, turn_factor_capped(-x, y));
-        pwm_set_gpio_level(REAR_ENB_PIN, turn_factor_capped(-x, y));
-        pwm_set_gpio_level(FRONT_ENB_PIN, y);
         pwm_set_gpio_level(REAR_ENB_PIN, y);
+        pwm_set_gpio_level(FRONT_ENB_PIN, 0);
+        pwm_set_gpio_level(REAR_ENA_PIN, 0);
+    } else if (x < 0) {  // turning left
+        pwm_set_gpio_level(FRONT_ENA_PIN, 0);
+        pwm_set_gpio_level(REAR_ENB_PIN, 0);
+        pwm_set_gpio_level(FRONT_ENB_PIN, y);
+        pwm_set_gpio_level(REAR_ENA_PIN, y);
     } else {
         for (int i = 0; i < 4; i++) {
             pwm_set_gpio_level(enables[i], y);
