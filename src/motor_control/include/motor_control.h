@@ -5,13 +5,16 @@
 
 #include "thumbstick.h"
 
-void set_motors_from_joystick_coords(struct thumbstick_state* coords);
+/**
+ * Initiate GPIOs and PWM for the two L298N motor controllers
+ */
 void motor_control_init(void);
-void drive_fwd(void);
-void drive_reverse(void);
-void drive_brake(void);
-void drive_coast(void);
-void drive_left(void);
-void drive_right(void);
+
+/**
+ * Set direction and speed of motors based on an x-y thumbstick reading.
+ *
+ * @param coords A thumbstick_state struct holding the x-y coordinates to apply.
+ */
+void set_motors_from_joystick_coords(struct thumbstick_state* coords);
 
 #endif  // _MOTOR_CONTROL_H

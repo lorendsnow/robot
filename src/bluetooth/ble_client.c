@@ -47,6 +47,7 @@ static gatt_client_notification_t   notification_listener;
 static int                          notification_listener_registered = 0;
 static int                          thumbstick_characteristic_found  = 0;
 static indicator_pins_t*            indicator_pins                   = NULL;
+static async_context_t*             _ctx                             = NULL;
 
 static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                                      uint8_t* packet, uint16_t size);
@@ -215,7 +216,9 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                     if (value_length == sizeof(struct thumbstick_state)) {
                         struct thumbstick_state state;
                         memcpy(&state, value, sizeof(state));
+                        async_context_acquire_lock_blocking(_ctx);
                         set_motors_from_joystick_coords(&state);
+                        async_context_release_lock(_ctx);
                     } else {
                         printf(
                             "Received notification with unexpected length %u\n",
@@ -334,6 +337,7 @@ const btstack_run_loop_t* bt_client_init(async_context_t*  ctx,
     printf("got run loop\n");
     btstack_run_loop_init(runloop);
     printf("initiated runloop\n");
+    _ctx = ctx;
 
     printf("l2cap initiating...\n");
     l2cap_init();
