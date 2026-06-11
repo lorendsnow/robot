@@ -1,0 +1,5 @@
+Checks: clang-analyzer*,bugprone*,misc*,performance*,-misc-include-cleaner
+WarningsAsErrors: ""
+HeaderFileExtensions: ["h"]
+ImplementationFileExtensions: ["c"]
+HeaderFilterRegex: ".*"
