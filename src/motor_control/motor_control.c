@@ -58,12 +58,12 @@
  * relative to the non-turn-side motors
  */
 #define turn_factor_uncapped(x, y) \
-    ((((float)PWM_WRAP - (float)x) / (float)PWM_WRAP) * y)
+    ((((float)PWM_WRAP - (float)(x)) / (float)PWM_WRAP) * (y))
 
 static const uint32_t ENABLE_PINS[4] = {FRONT_ENA_PIN, FRONT_ENB_PIN,
                                         REAR_ENA_PIN, REAR_ENB_PIN};
 
-void set_speed(int8_t x, int8_t y) {
+static void set_speed(int8_t x, int8_t y) {
     uint16_t scaled_x;
     if (x > 0) {  // turning right
         scaled_x = turn_factor_uncapped(x, y);
@@ -84,21 +84,21 @@ void set_speed(int8_t x, int8_t y) {
     }
 }
 
-void drive_fwd(void) {
+static void drive_fwd(void) {
     gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT1 | REAR_INPUT3);
     gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT2 | REAR_INPUT4);
 }
 
-void drive_reverse(void) {
+static void drive_reverse(void) {
     gpio_clr_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT1 | REAR_INPUT3);
     gpio_set_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT2 | REAR_INPUT4);
 }
 
-void drive_brake(void) { gpio_set_mask(ALL_GPIO); }
+static void drive_brake(void) { gpio_set_mask(ALL_GPIO); }
 
-void drive_coast(void) { gpio_clr_mask(ENABLES); }
+static void drive_coast(void) { gpio_clr_mask(ENABLES); }  // NOLINT(*-unused*)
 
-void spin(int8_t x) {
+static void spin(int8_t x) {
     if (x < 0) {
         gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT4);
         gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT3);
@@ -125,12 +125,14 @@ void motor_control_init(void) {
     pwm_config_set_clkdiv_int(&cfg, clk_divisor);
     pwm_config_set_wrap(&cfg, PWM_WRAP);
 
+    // NOLINTBEGIN(*.FixedAddressDereference)
     for (int i = 0; i < 4; i++) {
         uint slicenum = pwm_gpio_to_slice_num(ENABLE_PINS[i]);
         pwm_init(slicenum, &cfg, false);
         pwm_set_gpio_level(ENABLE_PINS[i], 0);
         pwm_set_enabled(slicenum, true);
     }
+    // NOLINTEND(*.FixedAddressDereference)
 
     drive_brake();
 }
@@ -138,17 +140,17 @@ void motor_control_init(void) {
 void set_motors_from_joystick_coords(struct thumbstick_state* coords) {
     int8_t x =
         (coords->x <= JS_DEADZONE && coords->x >= -JS_DEADZONE) ? 0 : coords->x;
-    int8_t y =
-        (coords->y <= JS_DEADZONE && coords->y >= -JS_DEADZONE)
-            ? 0
-            : -coords->y;  // invert y axis so up on thumbstick is forward
+    int8_t y = (coords->y <= JS_DEADZONE && coords->y >= -JS_DEADZONE)
+                   ? 0
+                   : (int8_t)-coords
+                         ->y;  // invert y axis so up on thumbstick is forward
 
     if (y > 0) {
         drive_fwd();
         set_speed(x, y);
     } else if (y < 0) {
         drive_reverse();
-        set_speed(x, -y);
+        set_speed(x, -y);  // NOLINT(*-conversions)
     } else {
         if (x == 0) {
             drive_brake();

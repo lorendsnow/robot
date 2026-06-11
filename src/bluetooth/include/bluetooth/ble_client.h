@@ -1,7 +1,8 @@
-#ifndef _BLUETOOTH_CLIENT_H
-#define _BLUETOOTH_CLIENT_H
+#ifndef BLUETOOTH_CLIENT_H
+#define BLUETOOTH_CLIENT_H
 
 #include "pico/async_context.h"
+#include "pico/btstack_run_loop_async_context.h"
 
 typedef struct indicator_pins {
     uint8_t green;
@@ -11,4 +12,4 @@ typedef struct indicator_pins {
 const btstack_run_loop_t* bt_client_init(async_context_t*  ctx,
                                          indicator_pins_t* pins);
 
-#endif  // _BLUETOOTH_CLIENT_H
+#endif  // BLUETOOTH_CLIENT_H

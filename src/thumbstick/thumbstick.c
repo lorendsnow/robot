@@ -5,7 +5,7 @@
 #include "thumbstick.h"
 
 #define ADC_MAX  ((1 << 12) - 1)
-#define scale(x) ((((float)x / (float)ADC_MAX) * 200) - 100)
+#define scale(x) ((((float)(x) / (float)ADC_MAX) * 200) - 100)
 
 static uint8_t X_PIN;
 static uint8_t X_INPUT;
@@ -24,7 +24,7 @@ void thumbstick_init(struct thumbstick_config* cfg) {
 }
 
 void thumbstick_read(struct thumbstick_state* state) {
-    adc_select_input(X_INPUT);
+    adc_select_input(X_INPUT);  // NOLINT(*.FixedAddressDereference)
     uint16_t x_raw = adc_read();
     printf("int8 max divided by adc max: %f; int8 max divided by 2: %d\n",
            (float)INT8_MAX / (float)ADC_MAX, INT8_MAX / 2);

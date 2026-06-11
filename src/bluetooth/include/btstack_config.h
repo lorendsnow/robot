@@ -1,5 +1,5 @@
-#ifndef _BTSTACK_CONFIG_H
-#define _BTSTACK_CONFIG_H
+#ifndef BTSTACK_CONFIG_H
+#define BTSTACK_CONFIG_H
 
 // BTstack features that can be enabled
 #define ENABLE_LOG_INFO
@@ -85,4 +85,4 @@
 
 #define HAVE_BTSTACK_STDIN
 
-#endif  // _BTSTACK_CONFIG_H
+#endif  // BTSTACK_CONFIG_H

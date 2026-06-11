@@ -1,5 +1,5 @@
-#ifndef _THUMBSTICK_H
-#define _THUMBSTICK_H
+#ifndef THUMBSTICK_H
+#define THUMBSTICK_H
 
 #include "pico/stdlib.h"
 
@@ -18,4 +18,4 @@ struct thumbstick_state {
 void thumbstick_init(struct thumbstick_config* cfg);
 void thumbstick_read(struct thumbstick_state* state);
 
-#endif  // _THUMBSTICK_H
+#endif  // THUMBSTICK_H

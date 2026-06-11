@@ -1,5 +1,5 @@
-#ifndef _MOTOR_CONTROL_H
-#define _MOTOR_CONTROL_H
+#ifndef MOTOR_CONTROL_H
+#define MOTOR_CONTROL_H
 
 #include "pico/stdlib.h"
 
@@ -17,4 +17,4 @@ void motor_control_init(void);
  */
 void set_motors_from_joystick_coords(struct thumbstick_state* coords);
 
-#endif  // _MOTOR_CONTROL_H
+#endif  // MOTOR_CONTROL_H

@@ -11,7 +11,7 @@
 
 static struct thumbstick_state state;
 
-const uint8_t adv_data[] = {
+static const uint8_t adv_data[] = {
     /* Flags general discoverable */
     0x02,
     BLUETOOTH_DATA_TYPE_FLAGS,
@@ -35,7 +35,7 @@ const uint8_t adv_data[] = {
     0x10,
     0xff,
 };
-const uint8_t adv_data_len = sizeof(adv_data);
+static const uint8_t adv_data_len = sizeof(adv_data);
 
 static btstack_packet_callback_registration_t hci_event_callback_registration;
 static btstack_packet_callback_registration_t sm_event_callback_registration;
@@ -43,9 +43,11 @@ static hci_con_handle_t                       con_handle;
 
 static uint16_t le_notification_enabled = 0;
 
+// NOLINTBEGIN(*-easily-swappable-parameters)
 static uint16_t att_read_callback(hci_con_handle_t connection_handle,
                                   uint16_t att_handle, uint16_t offset,
                                   uint8_t* buffer, uint16_t buffer_size) {
+    // NOLINTEND(*-easily-swappable-parameters)
     UNUSED(connection_handle);
 
     if (att_handle ==
@@ -57,10 +59,12 @@ static uint16_t att_read_callback(hci_con_handle_t connection_handle,
     return 0;
 }
 
+// NOLINTBEGIN(*-easily-swappable-parameters)
 static int att_write_callback(hci_con_handle_t connection_handle,
                               uint16_t att_handle, uint16_t transaction_mode,
                               uint16_t offset, uint8_t* buffer,
                               uint16_t buffer_size) {
+    // NOLINTEND(*-easily-swappable-parameters)
     UNUSED(transaction_mode);
     UNUSED(offset);
     UNUSED(buffer_size);
@@ -82,8 +86,10 @@ static int att_write_callback(hci_con_handle_t connection_handle,
     return 0;
 }
 
+// NOLINTBEGIN(*-easily-swappable-parameters)
 static void packet_handler(uint8_t packet_type, uint16_t channel,
                            uint8_t* packet, uint16_t size) {
+    // NOLINTEND(*-easily-swappable-parameters)
     UNUSED(channel);
     UNUSED(size);
 

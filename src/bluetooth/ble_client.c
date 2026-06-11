@@ -1,8 +1,8 @@
+#include <string.h>
 #include "btstack.h"
 #include "pico/btstack_run_loop_async_context.h"
 #include "pico/printf.h"
 #include "pico/stdlib.h"
-#include "string.h"
 
 #include "bluetooth/ble_client.h"
 #include "thumbstick.h"
@@ -47,10 +47,12 @@ static gatt_client_notification_t   notification_listener;
 static int                          notification_listener_registered = 0;
 static int                          thumbstick_characteristic_found  = 0;
 static indicator_pins_t*            indicator_pins                   = NULL;
-static async_context_t*             _ctx                             = NULL;
+static async_context_t*             ctx_                             = NULL;
 
+// NOLINTBEGIN(*-easily-swappable-parameters)
 static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                                      uint8_t* packet, uint16_t size);
+// NOLINTEND(*-easily-swappable-parameters)
 
 static bool advertisement_contains_name(const char* name, uint8_t adv_len,
                                         const uint8_t* adv_data) {
@@ -88,9 +90,10 @@ static void client_connect_to_controller(void) {
            bd_addr_to_str(controller_addr));
     gap_connect(controller_addr, controller_addr_type);
 }
-
+// NOLINTBEGIN(*-easily-swappable-parameters)
 static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                                      uint8_t* packet, uint16_t size) {
+    // NOLINTEND(*-easily-swappable-parameters)
     UNUSED(packet_type);
     UNUSED(channel);
     UNUSED(size);
@@ -215,10 +218,13 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                         gatt_event_notification_get_value(packet);
                     if (value_length == sizeof(struct thumbstick_state)) {
                         struct thumbstick_state state;
+                        // NOLINTBEGIN(*.DeprecatedOrUnsafeBufferHandling) pico
+                        // sdk doesn't implement memcpy_s
                         memcpy(&state, value, sizeof(state));
-                        async_context_acquire_lock_blocking(_ctx);
+                        // NOLINTEND(*.DeprecatedOrUnsafeBufferHandling)
+                        async_context_acquire_lock_blocking(ctx_);
                         set_motors_from_joystick_coords(&state);
-                        async_context_release_lock(_ctx);
+                        async_context_release_lock(ctx_);
                     } else {
                         printf(
                             "Received notification with unexpected length %u\n",
@@ -226,8 +232,6 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                     }
                     break;
                 }
-                case GATT_EVENT_QUERY_COMPLETE:
-                    break;
                 default:
                     break;
             }
@@ -238,8 +242,10 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
     }
 }
 
+// NOLINTBEGIN(*-easily-swappable-parameters)
 static void packet_handler(uint8_t packet_type, uint16_t channel,
                            uint8_t* packet, uint16_t size) {
+    // NOLINTEND(*-easily-swappable-parameters)
     UNUSED(channel);
     UNUSED(size);
 
@@ -316,7 +322,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel,
     }
 }
 
-void init_indicators(indicator_pins_t* pins) {
+static void init_indicators(indicator_pins_t* pins) {
     indicator_pins = pins;
     gpio_init_mask((1 << pins->red) | (1 << pins->green));
     gpio_set_dir_out_masked((1 << pins->red) | (1 << pins->green));
@@ -337,7 +343,7 @@ const btstack_run_loop_t* bt_client_init(async_context_t*  ctx,
     printf("got run loop\n");
     btstack_run_loop_init(runloop);
     printf("initiated runloop\n");
-    _ctx = ctx;
+    ctx_ = ctx;
 
     printf("l2cap initiating...\n");
     l2cap_init();
