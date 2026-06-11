@@ -1,6 +1,6 @@
 bin-dir = build/bin
-client-elf = btclient.elf
-server-elf = btserver.elf
+robot-elf = robot.elf
+controller-elf = controller.elf
 display-elf = display.elf
 
 minicom :
@@ -12,11 +12,22 @@ clean :
 build-all :
 	cmake --build build
 
-flash-server :
-	cmake --build build && picotool load $(bin-dir)/$(server-elf) -fx
+flash-controller :
+	cmake --build build -t controller && picotool load $(bin-dir)/$(controller-elf) -fx
 
-flash-client :
-	cmake --build build && picotool load $(bin-dir)/$(client-elf) -fx
+flash-robot :
+	cmake --build build -t robot && picotool load $(bin-dir)/$(robot-elf) -fx
 
 flash-display :
-	cmake --build build && picotool load $(bin-dir)/$(display-elf) -fx
+	cmake --build build -t display && picotool load $(bin-dir)/$(display-elf) -fx
+
+tidy:
+	clang-tidy -p build/compile-commands.json \
+	src/*.c \
+	src/bluetooth/*.c \
+	src/bluetooth/include/*.h \
+	src/bluetooth/include/bluetooth/*.h \
+	src/motor_control/*.c \
+	src/motor_control/include/*.h \
+	src/thumbstick/*.c \
+	src/thumbstick/include/*.h
