@@ -23,28 +23,24 @@
 #define FRONT_INPUT1 (1 << FRONT_INPUT1_PIN)
 #define FRONT_INPUT2 (1 << FRONT_INPUT2_PIN)
 
-#define REAR_ENA    (1 << REAR_ENA_PIN)
-#define REAR_INPUT1 (1 << REAR_INPUT1_PIN)
-#define REAR_INPUT2 (1 << REAR_INPUT2_PIN)
+#define REAR_ENB    (1 << REAR_ENB_PIN)
+#define REAR_INPUT3 (1 << REAR_INPUT3_PIN)
+#define REAR_INPUT4 (1 << REAR_INPUT4_PIN)
 
 /* Right-hand side bitmasks */
 #define FRONT_ENB    (1 << FRONT_ENB_PIN)
 #define FRONT_INPUT3 (1 << FRONT_INPUT3_PIN)
 #define FRONT_INPUT4 (1 << FRONT_INPUT4_PIN)
 
-#define REAR_ENB    (1 << REAR_ENB_PIN)
-#define REAR_INPUT3 (1 << REAR_INPUT3_PIN)
-#define REAR_INPUT4 (1 << REAR_INPUT4_PIN)
+#define REAR_ENA    (1 << REAR_ENA_PIN)
+#define REAR_INPUT1 (1 << REAR_INPUT1_PIN)
+#define REAR_INPUT2 (1 << REAR_INPUT2_PIN)
 
 /* Aggregated bitmasks */
-#define REAR_ENABLES  (REAR_ENA | REAR_ENB)
-#define FRONT_ENABLES (FRONT_ENA | FRONT_ENB)
-#define ENABLES       (REAR_ENABLES | FRONT_ENABLES)
+#define ENABLES (FRONT_ENA | FRONT_ENB | REAR_ENA | REAR_ENB)
 
 #define REAR_INPUTS  (REAR_INPUT1 | REAR_INPUT2 | REAR_INPUT3 | REAR_INPUT4)
 #define FRONT_INPUTS (FRONT_INPUT1 | FRONT_INPUT2 | FRONT_INPUT3 | FRONT_INPUT4)
-#define RIGHT_INPUTS (FRONT_INPUT3 | FRONT_INPUT4 | REAR_INPUT3 | REAR_INPUT4)
-#define LEFT_INPUTS  (FRONT_INPUT1 | FRONT_INPUT2 | REAR_INPUT1 | REAR_INPUT2)
 #define INPUTS       (FRONT_INPUTS | REAR_INPUTS)
 
 #define ALL_GPIO (ENABLES | INPUTS)  /// All GPIO pins
@@ -97,13 +93,13 @@ static void drive_reverse(void) {
 static void drive_brake(void) { gpio_set_mask(ALL_GPIO); }
 
 static void spin(int8_t x) {
-    if (x < 0) {
-        gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT4);
-        gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT3);
+    if (x < 0) {  // spin left
+        gpio_set_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT3);
+        gpio_clr_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT4);
         x *= -1;
-    } else {
-        gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT4);
-        gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT3);
+    } else {  // spin right
+        gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT4);
+        gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT3);
     }
 
     for (int i = 0; i < 4; i++) {
