@@ -1,5 +1,4 @@
 #include "hardware/adc.h"
-#include "pico/printf.h"
 #include "pico/stdlib.h"
 
 #include "thumbstick.h"
@@ -26,12 +25,9 @@ void thumbstick_init(const struct thumbstick_config* cfg) {
 void thumbstick_read(struct thumbstick_state* state) {
     adc_select_input(X_INPUT);  // NOLINT(*.FixedAddressDereference)
     uint16_t x_raw = adc_read();
-    printf("int8 max divided by adc max: %f; int8 max divided by 2: %d\n",
-           (float)INT8_MAX / (float)ADC_MAX, INT8_MAX / 2);
-    printf("raw x: %d\n", x_raw);
+
     adc_select_input(Y_INPUT);
     uint16_t y_raw = adc_read();
-    printf("raw y: %d\n", y_raw);
 
     state->x = scale(x_raw);
     state->y = scale(y_raw);
