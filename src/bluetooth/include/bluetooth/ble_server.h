@@ -3,6 +3,6 @@
 
 #include "thumbstick.h"
 
-const btstack_run_loop_t* bt_server_init(async_context_t* ctx);
+void bt_server_init(async_context_t* ctx);
 
 #endif  // _BLUETOOTH_SERVER_H

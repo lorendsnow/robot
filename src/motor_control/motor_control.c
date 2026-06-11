@@ -60,7 +60,7 @@
 #define turn_factor_uncapped(x, y) \
     ((((float)PWM_WRAP - (float)x) / (float)PWM_WRAP) * y)
 
-const static uint32_t ENABLE_PINS[4] = {FRONT_ENA_PIN, FRONT_ENB_PIN,
+static const uint32_t ENABLE_PINS[4] = {FRONT_ENA_PIN, FRONT_ENB_PIN,
                                         REAR_ENA_PIN, REAR_ENB_PIN};
 
 void set_speed(int8_t x, int8_t y) {

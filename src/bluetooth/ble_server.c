@@ -51,8 +51,7 @@ static uint16_t att_read_callback(hci_con_handle_t connection_handle,
     if (att_handle ==
         ATT_CHARACTERISTIC_0f9e4129_0220_4669_82dc_79b378fa1dff_01_VALUE_HANDLE) {
         return att_read_callback_handle_blob(
-            (const uint8_t*)&state, sizeof(state), offset, buffer,
-            buffer_size);
+            (const uint8_t*)&state, sizeof(state), offset, buffer, buffer_size);
     }
 
     return 0;
@@ -62,6 +61,10 @@ static int att_write_callback(hci_con_handle_t connection_handle,
                               uint16_t att_handle, uint16_t transaction_mode,
                               uint16_t offset, uint8_t* buffer,
                               uint16_t buffer_size) {
+    UNUSED(transaction_mode);
+    UNUSED(offset);
+    UNUSED(buffer_size);
+
     switch (att_handle) {
         case ATT_CHARACTERISTIC_0f9e4129_0220_4669_82dc_79b378fa1dff_01_CLIENT_CONFIGURATION_HANDLE:
             le_notification_enabled =
@@ -113,12 +116,12 @@ static void packet_handler(uint8_t packet_type, uint16_t channel,
     }
 }
 
-const btstack_run_loop_t* bt_server_init(async_context_t* ctx) {
+void bt_server_init(async_context_t* ctx) {
     state.x = 0;
     state.y = 0;
 
     printf("setting up run loop...\n");
-    btstack_run_loop_t* runloop =
+    const btstack_run_loop_t* runloop =
         btstack_run_loop_async_context_get_instance(ctx);
     if (runloop == NULL) {
         printf("runloop is null!\n");
@@ -158,6 +161,4 @@ const btstack_run_loop_t* bt_server_init(async_context_t* ctx) {
 
     printf("turning on HCI...\n");
     hci_power_control(HCI_POWER_ON);
-
-    return runloop;
 }

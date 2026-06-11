@@ -21,3 +21,10 @@ target_include_directories(bluetooth
 )
 
 pico_btstack_make_gatt_header(bluetooth PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include/controller_server.gatt)
+
+target_compile_options(bluetooth
+    PRIVATE
+        -Wall
+        -Werror
+        -Wextra
+)

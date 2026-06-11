@@ -12,3 +12,10 @@ target_include_directories(motor_control
     PUBLIC
         include
 )
+
+target_compile_options(motor_control
+    PRIVATE
+        -Wall
+        -Werror
+        -Wextra
+)

@@ -4,13 +4,13 @@ add_subdirectory(tcp)
 add_subdirectory(thumbstick)
 add_subdirectory(ssd1306)
 
-add_executable(btclient test_bt_client.c)
-pico_set_program_name(btclient "btclient")
-pico_set_program_version(btclient "0.1")
+add_executable(robot robot.c)
+pico_set_program_name(robot "robot")
+pico_set_program_version(robot "0.1")
 
-pico_enable_stdio_uart(btclient 1)
+pico_enable_stdio_uart(robot 1)
 
-target_link_libraries(btclient
+target_link_libraries(robot
     PRIVATE
         pico_btstack_cyw43
         pico_cyw43_driver
@@ -19,15 +19,22 @@ target_link_libraries(btclient
         motor_control
 )
 
-pico_add_extra_outputs(btclient)
+target_compile_options(robot
+    PRIVATE
+        -Wall
+        -Werror
+        -Wextra
+)
 
-add_executable(btserver test_bt_server.c)
-pico_set_program_name(btserver "btserver")
-pico_set_program_version(btserver "0.1")
+pico_add_extra_outputs(robot)
 
-pico_enable_stdio_uart(btserver 1)
+add_executable(controller controller.c)
+pico_set_program_name(controller "controller")
+pico_set_program_version(controller "0.1")
 
-target_link_libraries(btserver
+pico_enable_stdio_uart(controller 1)
+
+target_link_libraries(controller
     PRIVATE
         pico_btstack_cyw43
         pico_cyw43_driver
@@ -36,7 +43,14 @@ target_link_libraries(btserver
         thumbstick
 )
 
-pico_add_extra_outputs(btserver)
+target_compile_options(controller
+    PRIVATE
+        -Wall
+        -Werror
+        -Wextra
+)
+
+pico_add_extra_outputs(controller)
 
 add_executable(display display.c)
 pico_set_program_name(display "display")

@@ -10,3 +10,10 @@ target_include_directories(thumbstick
     PUBLIC
         include
 )
+
+target_compile_options(thumbstick
+    PRIVATE
+        -Wall
+        -Werror
+        -Wextra
+)

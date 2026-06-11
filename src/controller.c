@@ -18,7 +18,7 @@ int main(void) {
     thumbstick_init(&ts_cfg);
 
     printf("setting up bluetooth server...\n");
-    btstack_run_loop_t* runloop = bt_server_init(ctx);
+    bt_server_init(ctx);
 
     printf("beginning bt run loop...\n");
     btstack_run_loop_execute();
