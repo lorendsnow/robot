@@ -94,12 +94,12 @@ static void drive_brake(void) { gpio_set_mask(ALL_GPIO); }
 
 static void spin(int8_t x) {
     if (x < 0) {  // spin left
-        gpio_set_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT3);
-        gpio_clr_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT4);
+        gpio_set_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT1 | REAR_INPUT4);
+        gpio_clr_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT2 | REAR_INPUT3);
         x *= -1;
     } else {  // spin right
-        gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT3 | REAR_INPUT2 | REAR_INPUT4);
-        gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT3);
+        gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT2 | REAR_INPUT3);
+        gpio_clr_mask(FRONT_INPUT2 | FRONT_INPUT3 | REAR_INPUT1 | REAR_INPUT4);
     }
 
     for (int i = 0; i < 4; i++) {
