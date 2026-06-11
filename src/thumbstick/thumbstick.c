@@ -12,7 +12,7 @@ static uint8_t X_INPUT;
 static uint8_t Y_PIN;
 static uint8_t Y_INPUT;
 
-void thumbstick_init(struct thumbstick_config* cfg) {
+void thumbstick_init(const struct thumbstick_config* cfg) {
     X_PIN   = cfg->x_pin;
     X_INPUT = cfg->x_input;
     Y_PIN   = cfg->y_pin;
