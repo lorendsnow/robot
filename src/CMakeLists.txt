@@ -2,6 +2,7 @@ add_subdirectory(bluetooth)
 add_subdirectory(motor_control)
 add_subdirectory(tcp)
 add_subdirectory(thumbstick)
+add_subdirectory(ssd1306)
 
 add_executable(btclient test_bt_client.c)
 pico_set_program_name(btclient "btclient")
@@ -36,3 +37,17 @@ target_link_libraries(btserver
 )
 
 pico_add_extra_outputs(btserver)
+
+add_executable(display display.c)
+pico_set_program_name(display "display")
+pico_set_program_version(display "0.1")
+
+pico_enable_stdio_uart(display 1)
+
+target_link_libraries(display
+    PRIVATE
+        pico_stdlib
+        ssd1306
+)
+
+pico_add_extra_outputs(display)
