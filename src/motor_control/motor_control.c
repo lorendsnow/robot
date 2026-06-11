@@ -96,8 +96,6 @@ static void drive_reverse(void) {
 
 static void drive_brake(void) { gpio_set_mask(ALL_GPIO); }
 
-static void drive_coast(void) { gpio_clr_mask(ENABLES); }  // NOLINT(*-unused*)
-
 static void spin(int8_t x) {
     if (x < 0) {
         gpio_set_mask(FRONT_INPUT1 | FRONT_INPUT4 | REAR_INPUT1 | REAR_INPUT4);
