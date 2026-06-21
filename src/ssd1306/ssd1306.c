@@ -1,9 +1,13 @@
+#include <ctype.h>
+#include <pico/types.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "pico/stdlib.h"
 #include "hardware/i2c.h"
+#include "hardware/gpio.h"
 
 #include "ssd1306.h"
+#include "font.h"
 
 #define COMMAND_CTRL_BYTE    _u(0x00)
 #define COMMAND_CTRL_CO_BYTE _u(0x80)
@@ -30,62 +34,73 @@
 #define NUM_PAGES   (DISPLAY_HEIGHT / PAGE_HEIGHT)
 #define BUF_LEN     (NUM_PAGES * DISPLAY_WIDTH)
 
-typedef struct render_area {
-    uint8_t start_col;
-    uint8_t end_col;
-    uint8_t start_page;
-    uint8_t end_page;
-    int     buflen;
-} render_area_t;
+static struct {
+    i2c_inst_t*           i2c;
+    ssd1306_render_area_t ra;
+    uint8_t               addr;
+    uint8_t               frame_buf[BUF_LEN];
+} display;
 
-static uint8_t     _addr;
-static i2c_inst_t* _i2c;
-
-int write_command(uint8_t cmd) {
+static int write_command(uint8_t cmd) {
     uint8_t buf[2];
     buf[0] = COMMAND_CTRL_CO_BYTE;
     buf[1] = cmd;
 
-    return i2c_write_blocking(_i2c, _addr, buf, 2, false);
+    return i2c_write_blocking(display.i2c, display.addr, buf, 2, false);
 }
 
-void write_multi_command(uint8_t* cmds, size_t len) {
+static void write_multi_command(uint8_t* cmds, size_t len) {
     for (int i = 0; i < len; i++) {
         write_command(cmds[i]);
     }
 }
 
-void write_data_buf(uint8_t* buf, size_t len) {
-    uint8_t* temp_buf = malloc(len + 1);
+static void write_frame_buf(void) {
+    uint8_t* temp_buf = malloc(display.ra.buflen + 1);
     temp_buf[0]       = DATA_CTRL_BYTE;
-    memcpy(temp_buf + 1, buf, len);
+    memcpy(temp_buf + 1, display.frame_buf, display.ra.buflen);
 
-    i2c_write_blocking(_i2c, _addr, temp_buf, len + 1, false);
+    i2c_write_blocking(display.i2c, display.addr, temp_buf,
+                       display.ra.buflen + 1, false);
 
     free(temp_buf);
 }
 
-void calc_render_area_buflen(render_area_t* area) {
-    area->buflen = (area->end_col - area->start_col + 1) *
-                   (area->end_page - area->start_page + 1);
+static void calc_render_area_buflen() {
+    display.ra.buflen = (display.ra.end_col - display.ra.start_col + 1) *
+                        (display.ra.end_page - display.ra.start_page + 1);
 }
 
-void render(uint8_t* buf, render_area_t* area) {
-    uint8_t data[] = {
-        SET_COL_ADDR,  area->start_col,  area->end_col,
-        SET_PAGE_ADDR, area->start_page, area->end_page,
-    };
+static inline uint get_font_idx(uint8_t ch) {
+    if (ch >= 'A' && ch <= 'Z') {
+        return ch - 'A' + 1;
+    } else if (ch >= '0' && ch <= '9') {
+        return ch - '0' + 27;
+    } else {
+        return 0;
+    }
+}
 
-    write_multi_command(data, count_of(data));
-    write_data_buf(buf, area->buflen);
+static void write_char(ssd1306_cursor_t* cursor, uint8_t ch) {
+    if (cursor->x > DISPLAY_WIDTH - 8 || cursor->y > DISPLAY_HEIGHT - 8) {
+        return;
+    }
+
+    ch          = toupper(ch);
+    uint idx    = get_font_idx(ch);
+    uint fb_idx = (cursor->y / 8) * DISPLAY_WIDTH + cursor->x;
+
+    for (uint i = 0; i < 8; i++) {
+        display.frame_buf[fb_idx++] = font[idx * 8 + i];
+    }
 }
 
 void ssd1306_init_display(uint8_t addr, i2c_inst_t* i2c, uint8_t sda_pin,
                           uint8_t scl_pin) {
-    _addr = addr;
-    _i2c  = i2c;
+    display.addr = addr;
+    display.i2c  = i2c;
 
-    i2c_init(_i2c, 100 * 1000);
+    i2c_init(display.i2c, 100 * 1000);
 
     gpio_set_function(sda_pin, GPIO_FUNC_I2C);
     gpio_set_function(scl_pin, GPIO_FUNC_I2C);
@@ -110,23 +125,54 @@ void ssd1306_init_display(uint8_t addr, i2c_inst_t* i2c, uint8_t sda_pin,
     ssd1306_clear_display();
 }
 
+void ssd1306_clear_framebuf(void) { memset(display.frame_buf, 0, BUF_LEN); }
+
 void ssd1306_clear_display(void) {
-    render_area_t frame = {
-        .start_col  = 0,
-        .end_col    = DISPLAY_WIDTH - 1,
-        .start_page = 0,
-        .end_page   = NUM_PAGES - 1,
-    };
-
-    calc_render_area_buflen(&frame);
-
-    uint8_t buf[BUF_LEN];
-    memset(buf, 0, BUF_LEN);
-    render(buf, &frame);
+    ssd1306_reset_render_area();
+    ssd1306_clear_framebuf();
+    ssd1306_render();
 }
 
 void ssd1306_flash_screen(void) {
     write_command(SET_ALL_ON);
     sleep_ms(500);
     write_command(SET_ENTIRE_ON);
+}
+
+void ssd1306_write_string(ssd1306_cursor_t cursor, char* str) {
+    if (cursor.x > DISPLAY_WIDTH - 8 || cursor.y > DISPLAY_HEIGHT - 8) {
+        return;
+    }
+
+    while (*str) {
+        write_char(&cursor, *str++);
+        cursor.x += 8;
+    }
+}
+
+void ssd1306_reset_render_area(void) {
+    display.ra.start_col  = 0;
+    display.ra.end_col    = DISPLAY_WIDTH - 1;
+    display.ra.start_page = 0;
+    display.ra.end_page   = NUM_PAGES - 1;
+    calc_render_area_buflen();
+}
+
+void ssd1306_set_render_area(ssd1306_render_area_t* ra) {
+    display.ra.start_col  = ra->start_col;
+    display.ra.end_col    = ra->end_col;
+    display.ra.start_page = ra->start_page;
+    display.ra.end_page   = ra->end_page;
+
+    calc_render_area_buflen();
+}
+
+void ssd1306_render(void) {
+    uint8_t data[] = {
+        SET_COL_ADDR,  display.ra.start_col,  display.ra.end_col,
+        SET_PAGE_ADDR, display.ra.start_page, display.ra.end_page,
+    };
+
+    write_multi_command(data, count_of(data));
+    write_frame_buf();
 }
