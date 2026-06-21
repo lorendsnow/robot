@@ -7,8 +7,8 @@ int main(void) {
     ssd1306_init_display(0x3C, i2c0, 4, 5);
     char             msg[]  = "hello there";
     ssd1306_cursor_t cursor = {
-        .x = 24,
-        .y = 24,
+        .x = 0,
+        .y = 0,
     };
 
     while (true) {

@@ -71,27 +71,20 @@ static void calc_render_area_buflen() {
                         (display.ra.end_page - display.ra.start_page + 1);
 }
 
-static inline uint get_font_idx(uint8_t ch) {
-    if (ch >= 'A' && ch <= 'Z') {
-        return ch - 'A' + 1;
-    } else if (ch >= '0' && ch <= '9') {
-        return ch - '0' + 27;
-    } else {
-        return 0;
-    }
-}
-
 static void write_char(ssd1306_cursor_t* cursor, uint8_t ch) {
-    if (cursor->x > DISPLAY_WIDTH - 8 || cursor->y > DISPLAY_HEIGHT - 8) {
+    if (cursor->x > DISPLAY_WIDTH - 6 || cursor->y > DISPLAY_HEIGHT - 6) {
         return;
     }
 
-    ch          = toupper(ch);
-    uint idx    = get_font_idx(ch);
+    if (ch < ASCII_START || ch > ASCII_END) {
+        return;
+    }
+
+    uint idx    = ch - ASCII_START;
     uint fb_idx = (cursor->y / 8) * DISPLAY_WIDTH + cursor->x;
 
-    for (uint i = 0; i < 8; i++) {
-        display.frame_buf[fb_idx++] = font[idx * 8 + i];
+    for (uint i = 0; i < 6; i++) {
+        display.frame_buf[fb_idx++] = font[idx * 6 + i];
     }
 }
 
@@ -140,13 +133,13 @@ void ssd1306_flash_screen(void) {
 }
 
 void ssd1306_write_string(ssd1306_cursor_t cursor, char* str) {
-    if (cursor.x > DISPLAY_WIDTH - 8 || cursor.y > DISPLAY_HEIGHT - 8) {
+    if (cursor.x > DISPLAY_WIDTH - 6 || cursor.y > DISPLAY_HEIGHT - 6) {
         return;
     }
 
     while (*str) {
         write_char(&cursor, *str++);
-        cursor.x += 8;
+        cursor.x += 6;
     }
 }
 
@@ -175,4 +168,5 @@ void ssd1306_render(void) {
 
     write_multi_command(data, count_of(data));
     write_frame_buf();
+    ssd1306_clear_framebuf();
 }
