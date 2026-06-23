@@ -3,6 +3,7 @@ add_subdirectory(motor_control)
 add_subdirectory(tcp)
 add_subdirectory(thumbstick)
 add_subdirectory(ssd1306)
+add_subdirectory(hcsr04)
 
 add_executable(robot robot.c)
 pico_set_program_name(robot "robot")
@@ -62,6 +63,7 @@ target_link_libraries(display
     PRIVATE
         pico_stdlib
         ssd1306
+		hcsr04
 )
 
 pico_add_extra_outputs(display)
