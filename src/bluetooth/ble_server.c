@@ -1,15 +1,16 @@
 #include "btstack.h"
 #include "pico/btstack_run_loop_async_context.h"
 #include "pico/printf.h"
-#include "pico/sync.h"
 
 #include "thumbstick.h"
 #include "bluetooth/ble_server.h"
+#include <stdbool.h>
 #include "controller_server.h"
 
 #define APP_AD_FLAGS 0x06
 
 static struct thumbstick_state state;
+static bool                    connected;
 
 static const uint8_t adv_data[] = {
     /* Flags general discoverable */
@@ -75,6 +76,7 @@ static int att_write_callback(hci_con_handle_t connection_handle,
                 little_endian_read_16(buffer, 0) ==
                 GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_NOTIFICATION;
             con_handle = connection_handle;
+            connected  = true;
             if (le_notification_enabled) {
                 att_server_request_can_send_now_event(con_handle);
             }
@@ -105,6 +107,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel,
             break;
         case HCI_EVENT_DISCONNECTION_COMPLETE:
             le_notification_enabled = 0;
+            connected               = false;
             break;
         case ATT_EVENT_CAN_SEND_NOW:
             thumbstick_read(&state);
@@ -123,8 +126,9 @@ static void packet_handler(uint8_t packet_type, uint16_t channel,
 }
 
 void bt_server_init(async_context_t* ctx) {
-    state.x = 0;
-    state.y = 0;
+    connected = false;
+    state.x   = 0;
+    state.y   = 0;
 
     printf("setting up run loop...\n");
     const btstack_run_loop_t* runloop =
@@ -168,3 +172,5 @@ void bt_server_init(async_context_t* ctx) {
     printf("turning on HCI...\n");
     hci_power_control(HCI_POWER_ON);
 }
+
+bool bt_server_is_connected(void) { return connected; }
