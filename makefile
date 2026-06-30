@@ -1,7 +1,6 @@
 bin-dir = build/bin
 robot-elf = robot.elf
 controller-elf = controller.elf
-display-elf = display.elf
 
 minicom :
 	minicom -b 115200 -o -D /dev/ttyACM0
@@ -17,9 +16,6 @@ flash-controller :
 
 flash-robot :
 	cmake --build build -t robot && picotool load $(bin-dir)/$(robot-elf) -fx
-
-flash-display :
-	cmake --build build -t display && picotool load $(bin-dir)/$(display-elf) -fx
 
 tidy:
 	clang-tidy -p build/compile-commands.json \

@@ -39,10 +39,13 @@ pico_enable_stdio_uart(controller 1)
 
 target_link_libraries(controller
     PRIVATE
+		hardware_i2c
         pico_btstack_cyw43
         pico_cyw43_driver
+		pico_multicore
         pico_stdlib
         bluetooth
+		ssd1306
         thumbstick
 )
 
@@ -54,18 +57,3 @@ target_compile_options(controller
 )
 
 pico_add_extra_outputs(controller)
-
-add_executable(display display.c)
-pico_set_program_name(display "display")
-pico_set_program_version(display "0.1")
-
-pico_enable_stdio_uart(display 1)
-
-target_link_libraries(display
-    PRIVATE
-        pico_stdlib
-        ssd1306
-		hcsr04
-)
-
-pico_add_extra_outputs(display)
