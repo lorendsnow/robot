@@ -15,9 +15,11 @@ target_link_libraries(robot
     PRIVATE
         pico_btstack_cyw43
         pico_cyw43_driver
+		pico_multicore
         pico_stdlib
         bluetooth
         motor_control
+		hcsr04
 )
 
 target_compile_options(robot
