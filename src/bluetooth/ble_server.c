@@ -1,3 +1,4 @@
+#include <string.h>
 #include "btstack.h"
 #include "pico/btstack_run_loop_async_context.h"
 #include "pico/printf.h"
@@ -11,6 +12,8 @@
 
 static struct thumbstick_state state;
 static bool                    connected;
+
+static volatile uint16_t proximity_mm = 0;
 
 static const uint8_t adv_data[] = {
     /* Flags general discoverable */
@@ -79,6 +82,11 @@ static int att_write_callback(hci_con_handle_t connection_handle,
             connected  = true;
             if (le_notification_enabled) {
                 att_server_request_can_send_now_event(con_handle);
+            }
+            break;
+        case ATT_CHARACTERISTIC_a3d2c7e8_6b1f_4a93_9d0e_f5c8b2714e60_01_VALUE_HANDLE:
+            if (buffer_size == sizeof(uint16_t)) {
+                proximity_mm = little_endian_read_16(buffer, 0);
             }
             break;
         default:
@@ -174,3 +182,5 @@ void bt_server_init(async_context_t* ctx) {
 }
 
 bool bt_server_is_connected(void) { return connected; }
+
+uint16_t bt_server_get_proximity_mm(void) { return proximity_mm; }

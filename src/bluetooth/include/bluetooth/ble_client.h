@@ -1,6 +1,7 @@
 #ifndef BLUETOOTH_CLIENT_H
 #define BLUETOOTH_CLIENT_H
 
+#include <stdint.h>
 #include "pico/async_context.h"
 #include "pico/btstack_run_loop_async_context.h"
 
@@ -25,5 +26,14 @@ typedef struct indicator_pins {
  */
 const btstack_run_loop_t* bt_client_init(async_context_t*  ctx,
                                          indicator_pins_t* pins);
+
+/**
+ * Set the proximity sensor reading to be sent to the controller.
+ *
+ * Thread-safe; may be called from any core.
+ *
+ * @param distance_mm Distance in millimeters.
+ */
+void bt_client_set_proximity_mm(uint16_t distance_mm);
 
 #endif  // BLUETOOTH_CLIENT_H

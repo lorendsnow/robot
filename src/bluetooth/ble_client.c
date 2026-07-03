@@ -20,6 +20,12 @@ static const uint8_t thumbstick_characteristic_uuid[16] = {
     0x0f, 0x9e, 0x41, 0x29, 0x02, 0x20, 0x46, 0x69,
     0x82, 0xdc, 0x79, 0xb3, 0x78, 0xfa, 0x1d, 0xff};
 
+// Proximity Characteristic UUID: a3d2c7e8-6b1f-4a93-9d0e-f5c8b2714e60
+// BTstack discovery/event APIs use big-endian (textual) byte order.
+static const uint8_t proximity_characteristic_uuid[16] = {
+    0xa3, 0xd2, 0xc7, 0xe8, 0x6b, 0x1f, 0x4a, 0x93,
+    0x9d, 0x0e, 0xf5, 0xc8, 0xb2, 0x71, 0x4e, 0x60};
+
 static const char* controller_name = "Controller";
 
 typedef enum {
@@ -49,10 +55,45 @@ static int                          thumbstick_characteristic_found  = 0;
 static indicator_pins_t*            indicator_pins                   = NULL;
 static async_context_t*             ctx_                             = NULL;
 
+static gatt_client_characteristic_t proximity_characteristic;
+static int                          proximity_characteristic_found = 0;
+static volatile uint16_t            proximity_value_mm             = 0;
+static btstack_timer_source_t       proximity_timer;
+
+#define PROXIMITY_SEND_INTERVAL_MS 100
+
 // NOLINTBEGIN(*-easily-swappable-parameters)
 static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                                      uint8_t* packet, uint16_t size);
 // NOLINTEND(*-easily-swappable-parameters)
+
+static void proximity_timer_handler(btstack_timer_source_t* ts);
+
+static void start_proximity_timer(void) {
+    btstack_run_loop_set_timer(&proximity_timer, PROXIMITY_SEND_INTERVAL_MS);
+    btstack_run_loop_set_timer_handler(&proximity_timer,
+                                       proximity_timer_handler);
+    btstack_run_loop_add_timer(&proximity_timer);
+}
+
+static void stop_proximity_timer(void) {
+    btstack_run_loop_remove_timer(&proximity_timer);
+}
+
+static void proximity_timer_handler(btstack_timer_source_t* ts) {
+    UNUSED(ts);
+    if (client_state != CLIENT_READY) return;
+
+    uint16_t val = proximity_value_mm;
+
+    uint8_t buf[2];
+    little_endian_store_16(buf, 0, val);
+    gatt_client_write_value_of_characteristic_without_response(
+        connection_handle, proximity_characteristic.value_handle, sizeof(buf),
+        buf);
+
+    start_proximity_timer();
+}
 
 static bool advertisement_contains_name(const char* name, uint8_t adv_len,
                                         const uint8_t* adv_data) {
@@ -128,6 +169,7 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                         controller_service.start_group_handle,
                         controller_service.end_group_handle);
                     thumbstick_characteristic_found = 0;
+                    proximity_characteristic_found  = 0;
                     client_state = CLIENT_W4_CHARACTERISTIC_RESULT;
                     gatt_client_discover_characteristics_for_service(
                         handle_gatt_client_event, connection_handle,
@@ -150,6 +192,13 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                         thumbstick_characteristic       = characteristic;
                         thumbstick_characteristic_found = 1;
                         printf("Thumbstick characteristic matched.\n");
+                    } else if (characteristic.uuid16 == 0 &&
+                               memcmp(characteristic.uuid128,
+                                      proximity_characteristic_uuid,
+                                      16) == 0) {
+                        proximity_characteristic       = characteristic;
+                        proximity_characteristic_found = 1;
+                        printf("Proximity characteristic matched.\n");
                     }
                     break;
                 }
@@ -163,15 +212,16 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                         gap_disconnect(connection_handle);
                         break;
                     }
-                    if (!thumbstick_characteristic_found) {
+                    if (!thumbstick_characteristic_found ||
+                        !proximity_characteristic_found) {
                         printf(
-                            "Thumbstick characteristic not found in service. "
+                            "Required characteristics not found in service. "
                             "Disconnecting.\n");
                         gap_disconnect(connection_handle);
                         break;
                     }
                     printf(
-                        "Thumbstick characteristic found. Enabling "
+                        "All characteristics found. Enabling "
                         "notifications...\n");
                     notification_listener_registered = 1;
                     gatt_client_listen_for_characteristic_value_updates(
@@ -203,6 +253,7 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel,
                     client_state = CLIENT_READY;
                     gpio_put(indicator_pins->green, true);
                     gpio_put(indicator_pins->red, false);
+                    start_proximity_timer();
                     break;
                 default:
                     break;
@@ -298,6 +349,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel,
             break;
 
         case HCI_EVENT_DISCONNECTION_COMPLETE:
+            stop_proximity_timer();
             gpio_put(indicator_pins->green, false);
             gpio_put(indicator_pins->red, true);
             printf("Disconnected from Controller.\n");
@@ -367,4 +419,8 @@ const btstack_run_loop_t* bt_client_init(async_context_t*  ctx,
     hci_power_control(HCI_POWER_ON);
 
     return runloop;
+}
+
+void bt_client_set_proximity_mm(uint16_t distance_mm) {
+    proximity_value_mm = distance_mm;
 }

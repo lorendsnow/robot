@@ -81,7 +81,7 @@ static void write_char(ssd1306_cursor_t* cursor, uint8_t ch) {
     }
 
     uint idx    = ch - ASCII_START;
-    uint fb_idx = (cursor->y / 8) * DISPLAY_WIDTH + cursor->x;
+    uint fb_idx = cursor->y * DISPLAY_WIDTH + cursor->x;
 
     for (uint i = 0; i < 6; i++) {
         display.frame_buf[fb_idx++] = font[idx * 6 + i];
@@ -126,9 +126,9 @@ void ssd1306_clear_display(void) {
     ssd1306_render();
 }
 
-void ssd1306_flash_screen(void) {
+void ssd1306_flash_screen(size_t period_ms) {
     write_command(SET_ALL_ON);
-    sleep_ms(500);
+    sleep_ms(period_ms);
     write_command(SET_ENTIRE_ON);
 }
 
