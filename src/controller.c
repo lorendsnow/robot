@@ -24,13 +24,13 @@ int main(void) {
     cyw43_arch_init();
     async_context_t* ctx = cyw43_arch_async_context();
 
-    multicore_launch_core1(core1_routine);
-
     struct thumbstick_config ts_cfg = {
         .x_pin = 26, .x_input = 0, .y_pin = 27, .y_input = 1};
     thumbstick_init(&ts_cfg);
 
     bt_server_init(ctx);
+
+    multicore_launch_core1(core1_routine);
 
     btstack_run_loop_execute();
 }
